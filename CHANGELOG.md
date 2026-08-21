@@ -20,3 +20,10 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   ("OAuth Anmeldedaten"); was missing from the initial scaffold.
 - No functional code yet — `config_flow.py`, `coordinator.py`, `sensor.py`
   are stubs with `NotImplementedError` / `TODO` markers.
+
+### Fixed
+- `docs/DEVELOPMENT.md` install order: Application Credentials can only be
+  added *after* the HACS install (+ restart) — the integration dropdown on
+  that page only lists domains HA currently has loaded. Confirmed hands-on
+  on the real instance: attempting to add credentials before install left
+  "Tibber Vehicle" unselectable, since it wasn't a known domain yet.

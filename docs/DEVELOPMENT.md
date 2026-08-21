@@ -58,9 +58,26 @@ Once a change is committed and pushed to this repo's GitHub remote:
    URL, category "Integration" (only needed once).
 3. Install / update `tibber_vehicle` from HACS like any other custom
    integration — same path `volkswagencarnet` already uses there, including
-   its own update-tracking entity.
-4. Configure via Settings → Devices & Services → Add Integration →
-   "Tibber Vehicle" → complete the OAuth2 consent in the browser.
+   its own update-tracking entity. **Restart Home Assistant** after
+   installing — the domain only becomes known to HA (and thus selectable
+   anywhere) once it's loaded, which needs a restart for a first install.
+4. **Only now**, add the Application Credential: Settings → Devices &
+   Services → **Application Credentials** ("OAuth Anmeldedaten") → Add
+   application credential → select **Tibber Vehicle** from the integration
+   dropdown → enter the client ID/secret from step 1.
+
+   This step cannot be done before step 3 — the dropdown only offers
+   integrations HA currently has installed and loaded, so "Tibber Vehicle"
+   isn't selectable until after the HACS install (+ restart). Confirmed by
+   reading `async_step_pick_implementation` in HA core's
+   `config_entry_oauth2_flow.py`: with zero Application Credentials
+   registered for a domain, the config flow doesn't offer to create one
+   inline — it just aborts with "missing_configuration" (the abort message
+   already defined in this integration's `strings.json`) telling you to set
+   one up first, which is what this step does.
+5. Configure via Settings → Devices & Services → Add Integration →
+   "Tibber Vehicle" → this now finds the credential from step 4 and takes
+   you straight to the OAuth2 consent in the browser.
 
 ## 4. Versioning
 
