@@ -21,8 +21,18 @@ that level of detail instead of writing it out here.
   `translations/en.json` entries) — required for "Tibber Vehicle" to
   appear at all on Settings > Devices & Services > Application Credentials
   ("OAuth Anmeldedaten"); was missing from the initial scaffold.
-- No functional code yet — `config_flow.py`, `coordinator.py`, `sensor.py`
-  are stubs with `NotImplementedError` / `TODO` markers.
+- **Update 2026-08-21:** the line above is now stale — see the new "Added"
+  entry below. `config_flow.py`/`coordinator.py`/`sensor.py` are no longer
+  stubs.
+- The OAuth2 login flow, vehicle resolution, polling, and all five sensor
+  entities are now implemented — modeled directly on Home Assistant core's
+  Spotify integration (`extra_authorize_data`, `async_oauth_create_entry`,
+  `entry.runtime_data`). New `api.py` — a thin Tibber Data API client.
+  Verified by import-checking every module against a real `homeassistant`
+  install; **not yet verified with a live OAuth2 round-trip against
+  Tibber or inside a booted HA instance** — see `docs/DECISIONS.md`'s
+  "Login flow implementation" for the full detail and known, deliberately
+  deferred gaps (no PKCE, no reauth, single-vehicle-only).
 
 ### Fixed
 - `docs/DEVELOPMENT.md` install order: Application Credentials can only be

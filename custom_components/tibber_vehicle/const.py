@@ -38,3 +38,7 @@ CAPABILITY_CONNECTOR_STATUS = "connector.status"
 CAPABILITY_CHARGING_STATUS = "charging.status"
 
 DEFAULT_UPDATE_INTERVAL_SECONDS = 300
+
+# Mandatory on every Tibber Data API request (see docs/CONTEXT.md §3) —
+# missing/malformed risks throttling.
+USER_AGENT = "ha-tibber-vehicle/0.1.0 (github.com/simongerlach/ha-tibber-vehicle)"

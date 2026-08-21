@@ -1,43 +1,58 @@
 """DataUpdateCoordinator for Tibber Vehicle.
 
-Scaffold only. Design decision (docs/DECISIONS.md): non-interactive
-refresh-token-only polling of
-GET /v1/homes/{homeId}/devices/{deviceId}, mirroring the separation
-weconnect_mvp's tibber_client.py already has between the one-time
-interactive login and ongoing refresh. HA's OAuth2Session (from
-homeassistant.helpers.config_entry_oauth2_flow) should supply the bearer
-token here, handling refresh transparently.
+Polling shape modeled on Home Assistant core's Spotify integration
+(SpotifyCoordinator in homeassistant/components/spotify/coordinator.py) —
+a typed `ConfigEntry[TibberVehicleCoordinator]` via `entry.runtime_data`
+instead of the older `hass.data[DOMAIN][entry_id]` dict pattern. The
+coordinator only ever reads an already-valid token through the API
+client's `access_token_provider` callback wired up in `__init__.py` — see
+docs/DECISIONS.md for why token refresh itself is entirely
+`OAuth2Session`'s job, not something this class does.
 """
 from __future__ import annotations
 
 from datetime import timedelta
 import logging
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import API_BASE, DEFAULT_UPDATE_INTERVAL_SECONDS, DOMAIN
+from .api import TibberVehicleApiClient, TibberVehicleApiError
+from .const import DEFAULT_UPDATE_INTERVAL_SECONDS, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
+
+type TibberVehicleConfigEntry = ConfigEntry[TibberVehicleCoordinator]
 
 
 class TibberVehicleCoordinator(DataUpdateCoordinator[dict]):
     """Polls a single Tibber-paired vehicle's device detail."""
 
-    def __init__(self, hass: HomeAssistant, home_id: str, device_id: str) -> None:
+    config_entry: TibberVehicleConfigEntry
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        config_entry: TibberVehicleConfigEntry,
+        client: TibberVehicleApiClient,
+        home_id: str,
+        device_id: str,
+    ) -> None:
+        """Initialize."""
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=config_entry,
             name=DOMAIN,
             update_interval=timedelta(seconds=DEFAULT_UPDATE_INTERVAL_SECONDS),
         )
+        self._client = client
         self._home_id = home_id
         self._device_id = device_id
 
     async def _async_update_data(self) -> dict:
-        # TODO: GET f"{API_BASE}/homes/{self._home_id}/devices/{self._device_id}"
-        # via the OAuth2Session-backed aiohttp client, with the mandatory
-        # User-Agent header (see docs/CONTEXT.md §3) and exponential
-        # backoff-with-jitter on 429/5xx (not on 400/401/403/404 — those
-        # mean fix the request, not retry it).
-        raise NotImplementedError
+        try:
+            return await self._client.async_get_device(self._home_id, self._device_id)
+        except TibberVehicleApiError as err:
+            raise UpdateFailed(f"Error communicating with Tibber API: {err}") from err

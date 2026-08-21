@@ -5,18 +5,19 @@ vehicle data — state of charge, target SoC, estimated range, plug status,
 charging status — from the official [Tibber Data API](https://data-api.tibber.com)
 (`data-api.tibber.com`), for any vehicle paired inside a Tibber account.
 
-**Status: scaffold only, not yet functional.** No OAuth2 flow, coordinator,
-or sensor logic is implemented yet — `config_flow.py`, `coordinator.py`,
-`sensor.py` are stubs. The installation steps below describe how it *will*
-work once that lands. Steps 1–3 work today (they don't touch this
-integration's own code at all), but **step 4 fails immediately** — clicking
-"Tibber Vehicle" under Add Integration raises an error before Tibber's
-login page even loads, because `config_flow.py`'s `extra_authorize_data`
-deliberately raises `NotImplementedError` (and even if that were fixed,
-`__init__.py`'s `async_setup_entry` would immediately do the same right
-after). See [`docs/CONTEXT.md`](docs/CONTEXT.md) for the full background
-and [`docs/DECISIONS.md`](docs/DECISIONS.md) for the design decisions
-already made.
+**Status: login flow implemented, not yet verified end-to-end.** The full
+OAuth2 login (steps 1–4 below), vehicle resolution, polling, and the five
+sensor entities are all implemented, modeled on Home Assistant core's
+Spotify integration — see [`docs/DECISIONS.md`](docs/DECISIONS.md)'s "Login
+flow implementation" for exactly what and how. Every module has been
+import-checked against a real `homeassistant` install, but there has been
+**no live OAuth2 round-trip against Tibber yet and no boot inside an actual
+HA instance** — treat this as "should work" rather than "confirmed
+working" until that verification happens. Known, deliberately deferred
+gaps: no PKCE, no reauth flow, no multi-vehicle support (first vehicle
+found wins) — see `docs/DECISIONS.md` for why none of these block a
+working single-vehicle login. See [`docs/CONTEXT.md`](docs/CONTEXT.md) for
+the full background.
 
 ## Why this exists
 

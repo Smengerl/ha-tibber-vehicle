@@ -7,8 +7,17 @@
     },
     "abort": {
       "already_configured": "This Tibber account is already configured.",
-      "oauth2_error": "OAuth2 authentication error.",
-      "missing_configuration": "The Tibber Vehicle integration is not configured. Please follow the documentation."
+      "authorize_url_timeout": "Timeout generating authorize URL.",
+      "connection_error": "Could not resolve a paired vehicle. Is your Tibber account reachable and does it have a vehicle paired?",
+      "missing_configuration": "The Tibber Vehicle integration is not configured. Please follow the documentation.",
+      "missing_credentials": "The integration requires credentials.",
+      "no_url_available": "No URL available. For information about this error, [check the help section]({docs_url}).",
+      "no_vehicle_found": "No vehicle is paired with this Tibber account. Pair a vehicle in the Tibber app first, then try again.",
+      "oauth_error": "Received invalid token data.",
+      "oauth_failed": "Error while obtaining access token.",
+      "oauth_implementation_unavailable": "The selected authentication implementation is unavailable.",
+      "oauth_timeout": "Timeout resolving OAuth2 token.",
+      "oauth_unauthorized": "OAuth2 authorization error while obtaining access token."
     },
     "create_entry": {
       "default": "Successfully authenticated with Tibber."

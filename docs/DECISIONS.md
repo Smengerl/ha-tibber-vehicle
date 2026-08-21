@@ -119,12 +119,77 @@ one in the same place.
 
 Practical implication for `config_flow.py`/`__init__.py`: no custom
 token-storage code is needed or should be written — don't reimplement
-anything resembling `tibber_client.py`'s `TokenStore` here. The only thing
-left to implement is `async_oauth_create_entry` (currently a bare TODO
-comment) — override it to resolve the paired vehicle(s) via `GET /v1/homes`
-→ `GET /v1/homes/{id}/devices` before calling the default behavior via
-`super().async_oauth_create_entry(data)`, so the entry's title/unique_id
-reflect the actual vehicle instead of just the OAuth implementation name.
+anything resembling `tibber_client.py`'s `TokenStore` here.
+`async_oauth_create_entry` is now implemented this way (see "Login flow
+implementation" below).
+
+## Login flow implementation — modeled on HA core's Spotify integration
+
+Implemented 2026-08-21, structured after
+`homeassistant/components/spotify/{config_flow,__init__,coordinator}.py`
+line-for-line where the shape transfers directly (confirmed against the
+real source, not from memory) — chosen as the reference because it's one
+of the simplest core OAuth2 integrations that still does everything this
+one needs: `extra_authorize_data` for scopes, an `async_oauth_create_entry`
+override that resolves account-specific info before creating the entry,
+and the modern `entry.runtime_data` pattern (a typed
+`ConfigEntry[TibberVehicleCoordinator]` alias) instead of the older
+`hass.data[DOMAIN][entry_id]` dict.
+
+- **`config_flow.py`**: `extra_authorize_data` returns the scope string
+  from `const.OAUTH2_SCOPES`. `async_oauth_create_entry` does a one-shot
+  API call (`TibberVehicleApiClient.async_find_first_vehicle`, using the
+  fresh access token directly — no `OAuth2Session` yet, since the config
+  entry doesn't exist until this method returns) to resolve which vehicle
+  this Tibber account exposes, sets the entry's `unique_id` to its VIN, and
+  stores `home_id`/`device_id`/`vin` alongside the OAuth `data` dict.
+- **`api.py`** (new): a thin `TibberVehicleApiClient` wrapping the three
+  `GET` endpoints this integration needs. Response envelope shapes
+  (`{"homes": [...]}`, `{"devices": [...]}`) are taken directly from
+  `tibber_client.py`'s already-live-tested `homes()`/`devices()` methods,
+  not re-guessed. Auth is injected via an `access_token_provider` async
+  callback rather than the client holding a token itself — mirrors how
+  `spotifyaio.SpotifyClient.refresh_token_function` keeps API access and
+  token refresh as separate concerns.
+- **`__init__.py`**: `async_get_config_entry_implementation` +
+  `OAuth2Session` + `async_ensure_token_valid()`, wrapped in
+  `ConfigEntryNotReady` on failure — same shape as Spotify's
+  `async_setup_entry`. The coordinator gets an `_access_token()` closure
+  that re-validates the session before every use, so token refresh is
+  fully transparent to `api.py`.
+- **`coordinator.py`** / **`sensor.py`**: implemented as designed above —
+  `_async_update_data` calls `async_get_device`, wraps
+  `TibberVehicleApiError` as `UpdateFailed`; sensors read their capability
+  id out of `coordinator.data["capabilities"]`, converting `range.remaining`
+  from meters to km.
+
+**Verification done:** every module import-checked against a real
+`homeassistant` pip install (Python 3.14, matching `weconnect_mvp`'s own
+venv) — confirms import paths, class/attribute names, and the PEP 695
+`type` alias syntax are all correct. **Not yet done:** no live OAuth2
+round-trip against Tibber, no boot inside an actual HA instance (Docker
+image pulls were unreachable from this sandboxed environment when tried,
+see `docs/DEVELOPMENT.md` if that's still true later) — that's the
+remaining verification step before this is trustworthy end-to-end.
+
+**Known limitations, deliberately deferred rather than blocking a working
+v1:**
+- **No PKCE.** Tibber's own docs call PKCE "optional but recommended" for
+  the auth code flow; HA's default `LocalOAuth2Implementation` (what
+  `application_credentials.py`'s `AuthorizationServer` produces) doesn't
+  send PKCE parameters. Withings-style integrations add a custom
+  `AuthImplementation` subclass to get it — worth doing later, not
+  required for a working login.
+- **No reauth flow.** If the refresh token is ever revoked/expires beyond
+  recovery, the config entry will start failing rather than prompting the
+  user to re-link, unlike Spotify's `async_step_reauth`. A real gap, but
+  additive — doesn't change anything about the flow already built.
+- **First vehicle wins, no multi-vehicle support.** `async_find_first_vehicle`
+  stops at the first device found across all homes. Fine for the single
+  paired VW this was built against; a household with multiple Tibber-paired
+  vehicles would need one config entry per vehicle, which isn't wired up
+  (the unique-id-per-VIN design would support it, but the config flow
+  doesn't yet offer a picker step).
 
 ## `DataUpdateCoordinator` for polling, refresh-token-only at runtime
 
