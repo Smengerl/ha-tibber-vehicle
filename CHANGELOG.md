@@ -37,3 +37,13 @@ that level of detail instead of writing it out here.
   "Documentation" tab, so `README.md` is the only user-facing surface.
   Added `CONTRIBUTING.md` for contributor guidelines, split out from what
   had been developer-only content mixed into `docs/DEVELOPMENT.md`.
+- `README.md`'s status callout was inaccurate ("ends at step 5" - there are
+  only 4 steps) and vague about where following the install steps today
+  actually fails. Corrected: steps 1-3 work as described; step 4 fails
+  immediately (before Tibber's login page even loads), because
+  `config_flow.py`'s `extra_authorize_data` deliberately raises
+  `NotImplementedError`.
+- `docs/DECISIONS.md` was missing where OAuth2 tokens actually get stored
+  once implemented - added: directly in the config entry's own
+  `data["token"]`, persisted by Home Assistant core itself
+  (`.storage/core.config_entries`), not a file this integration manages.

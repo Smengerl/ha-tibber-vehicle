@@ -8,10 +8,15 @@ charging status — from the official [Tibber Data API](https://data-api.tibber.
 **Status: scaffold only, not yet functional.** No OAuth2 flow, coordinator,
 or sensor logic is implemented yet — `config_flow.py`, `coordinator.py`,
 `sensor.py` are stubs. The installation steps below describe how it *will*
-work once that lands; following them today ends at step 5 with nothing to
-configure yet. See [`docs/CONTEXT.md`](docs/CONTEXT.md) for the full
-background and [`docs/DECISIONS.md`](docs/DECISIONS.md) for the design
-decisions already made.
+work once that lands. Steps 1–3 work today (they don't touch this
+integration's own code at all), but **step 4 fails immediately** — clicking
+"Tibber Vehicle" under Add Integration raises an error before Tibber's
+login page even loads, because `config_flow.py`'s `extra_authorize_data`
+deliberately raises `NotImplementedError` (and even if that were fixed,
+`__init__.py`'s `async_setup_entry` would immediately do the same right
+after). See [`docs/CONTEXT.md`](docs/CONTEXT.md) for the full background
+and [`docs/DECISIONS.md`](docs/DECISIONS.md) for the design decisions
+already made.
 
 ## Why this exists
 

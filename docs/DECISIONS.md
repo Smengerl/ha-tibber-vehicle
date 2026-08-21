@@ -100,6 +100,32 @@ fragile (exact-match dependent, and Tibber's registration UI may reject a
 non-HTTPS URI). Don't design `config_flow.py` around this fallback path;
 rely on the `my` component being present.
 
+## Token storage: the config entry itself, not a file this integration manages
+
+Confirmed 2026-08-21 by reading `config_entry_oauth2_flow.py`'s default
+`async_step_creation`/`async_oauth_create_entry`: once the OAuth2 flow
+completes, the token dict (`access_token`, `refresh_token`, `expires_in`
+→ converted to `expires_at`, etc.) is stored directly as
+`entry.data["token"]` on the config entry HA creates
+(`{"auth_implementation": ..., "token": token}` passed to
+`async_create_entry`). Persistence is entirely HA core's job — config entry
+data lives in `.storage/core.config_entries` inside the HA config
+directory, not a file this integration reads/writes itself. Refresh at
+runtime works the same way: `OAuth2Session.async_ensure_token_valid()`
+(used from the coordinator, per the design above) calls
+`hass.config_entries.async_update_entry(entry, data={**entry.data, "token":
+new_token})` under the hood, so a refreshed token silently replaces the old
+one in the same place.
+
+Practical implication for `config_flow.py`/`__init__.py`: no custom
+token-storage code is needed or should be written — don't reimplement
+anything resembling `tibber_client.py`'s `TokenStore` here. The only thing
+left to implement is `async_oauth_create_entry` (currently a bare TODO
+comment) — override it to resolve the paired vehicle(s) via `GET /v1/homes`
+→ `GET /v1/homes/{id}/devices` before calling the default behavior via
+`super().async_oauth_create_entry(data)`, so the entry's title/unique_id
+reflect the actual vehicle instead of just the OAuth implementation name.
+
 ## `DataUpdateCoordinator` for polling, refresh-token-only at runtime
 
 Standard HA pattern: one `DataUpdateCoordinator` per config entry, polling
