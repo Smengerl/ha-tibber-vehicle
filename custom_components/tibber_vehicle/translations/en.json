@@ -13,5 +13,8 @@
     "create_entry": {
       "default": "Successfully authenticated with Tibber."
     }
+  },
+  "application_credentials": {
+    "description": "To link your Tibber account you need an OAuth2 client. To register one, please follow these steps.\n\n1. Go to the [Tibber client registration page]({client_registration_url}) and log in with your Tibber account.\n1. Create a new client.\n1. Under scopes, select at least `data-api-homes-read` and `data-api-vehicles-read`.\n1. Fill in `{redirect_url}` as the redirect URI. This works even if your Home Assistant instance has no public URL — see this integration's `docs/DECISIONS.md` for why.\n1. Fill in the client ID and secret that are now shown (the secret is only shown once)."
   }
 }

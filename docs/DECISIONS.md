@@ -37,7 +37,19 @@ Concretely this means:
 - `config_flow.py` subclasses `config_entry_oauth2_flow.AbstractOAuth2FlowHandler`.
 - Client id/secret registered as a HA **Application Credential**
   (`application_credentials` platform), the same mechanism HA's own cloud
-  integrations use — not stored as plain config entry data.
+  integrations use — not stored as plain config entry data, and **not**
+  something to add via `configuration.yaml`; it's entirely UI/storage-based
+  (`.storage/application_credentials`).
+- `custom_components/tibber_vehicle/application_credentials.py` is what
+  makes "Tibber Vehicle" show up as an option at all on Settings > Devices
+  & Services > Application Credentials ("OAuth Anmeldedaten" in the German
+  UI) — without this file the domain never appears there, independent of
+  whether the integration is otherwise installed. It declares the
+  authorize/token URLs (`async_get_authorization_server`) and supplies the
+  Tibber-client-registration walkthrough shown in that dialog
+  (`async_get_description_placeholders` + the matching
+  `application_credentials.description` string in `strings.json`/
+  `translations/en.json`).
 - The one-time interactive consent still happens through a browser, but via
   HA's frontend flow, not a `localhost:8515` redirect URI.
 
