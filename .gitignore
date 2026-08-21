@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.venv/
+venv/
+build/
+dist/
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local disposable HA dev instance state (see docs/DEVELOPMENT.md)
+dev-config/
+
+# Secrets — never commit Tibber client id/secret or tokens
+.env
+.env.local
+*_tokens.json
+secrets.yaml
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store

@@ -1,0 +1,17 @@
+{
+  "config": {
+    "step": {
+      "pick_implementation": {
+        "title": "Pick Authentication Method"
+      }
+    },
+    "abort": {
+      "already_configured": "This Tibber account is already configured.",
+      "oauth2_error": "OAuth2 authentication error.",
+      "missing_configuration": "The Tibber Vehicle integration is not configured. Please follow the documentation."
+    },
+    "create_entry": {
+      "default": "Successfully authenticated with Tibber."
+    }
+  }
+}
