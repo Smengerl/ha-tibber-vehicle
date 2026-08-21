@@ -1,7 +1,10 @@
 # Changelog
 
 All notable changes to this project are documented in this file. Format
-follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Entries
+describe what changed for someone installing/using this integration, not a
+full technical walkthrough of every commit — link the actual commit/PR for
+that level of detail instead of writing it out here.
 
 ## [Unreleased]
 
@@ -27,3 +30,10 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   that page only lists domains HA currently has loaded. Confirmed hands-on
   on the real instance: attempting to add credentials before install left
   "Tibber Vehicle" unselectable, since it wasn't a known domain yet.
+- Moved the installation & setup walkthrough (Tibber client registration,
+  HACS install, Application Credentials, adding the integration) from
+  `docs/DEVELOPMENT.md` into `README.md`, where HACS actually shows it to
+  users — unlike a Supervisor add-on, a HACS integration has no separate
+  "Documentation" tab, so `README.md` is the only user-facing surface.
+  Added `CONTRIBUTING.md` for contributor guidelines, split out from what
+  had been developer-only content mixed into `docs/DEVELOPMENT.md`.

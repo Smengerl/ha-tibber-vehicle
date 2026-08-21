@@ -5,12 +5,13 @@ vehicle data — state of charge, target SoC, estimated range, plug status,
 charging status — from the official [Tibber Data API](https://data-api.tibber.com)
 (`data-api.tibber.com`), for any vehicle paired inside a Tibber account.
 
-**Status: scaffold only, not yet functional.** This repo was just
-bootstrapped (2026-08-21) with the standard HA custom-component boilerplate
-and project docs. No OAuth2 flow, coordinator, or sensor logic is
-implemented yet — see [`docs/CONTEXT.md`](docs/CONTEXT.md) for the full
+**Status: scaffold only, not yet functional.** No OAuth2 flow, coordinator,
+or sensor logic is implemented yet — `config_flow.py`, `coordinator.py`,
+`sensor.py` are stubs. The installation steps below describe how it *will*
+work once that lands; following them today ends at step 5 with nothing to
+configure yet. See [`docs/CONTEXT.md`](docs/CONTEXT.md) for the full
 background and [`docs/DECISIONS.md`](docs/DECISIONS.md) for the design
-decisions already made, before writing any code here.
+decisions already made.
 
 ## Why this exists
 
@@ -48,13 +49,57 @@ in this API at all):
 No write/control support is possible — the Tibber Data API is read-only
 (confirmed: only `GET` endpoints exist in its schema).
 
+## Installation & setup
+
+### 1. Register an OAuth2 client with Tibber (one-time)
+
+Go to [`data-api.tibber.com/clients/manage/`](https://data-api.tibber.com/clients/manage/),
+log in with your Tibber account, and create a new client:
+
+- Scopes: select at least `data-api-homes-read` and `data-api-vehicles-read`.
+- Redirect URI: enter exactly **`https://my.home-assistant.io/redirect/oauth`**
+  — not your own instance's address, even if (like the primary target
+  instance for this integration) it's LAN-only with no public URL. This is
+  Home Assistant's standard shared redirect page for OAuth2 account
+  linking; the actual trip back to your instance happens entirely in your
+  browser, so it works regardless of whether your instance is reachable
+  from the internet. Full mechanism traced from HA's own source code in
+  [`docs/DECISIONS.md`](docs/DECISIONS.md).
+
+Note down the client ID and secret shown after creation — the secret is
+only displayed once.
+
+### 2. Install via HACS
+
+In HACS on your Home Assistant instance: **⋮ → Custom repositories** → add
+this repo's URL, category "Integration". Then install **Tibber Vehicle**
+from the store and **restart Home Assistant** — a first install only
+becomes fully known to HA (selectable anywhere in its UI) after a restart.
+
+### 3. Add the Application Credential
+
+Settings → Devices & Services → **Application Credentials** ("OAuth
+Anmeldedaten" in the German UI) → Add application credential → select
+**Tibber Vehicle** → enter the client ID/secret from step 1.
+
+This has to happen *after* step 2, not before — the integration dropdown
+here only lists domains HA currently has installed and loaded, so "Tibber
+Vehicle" isn't selectable until the HACS install (+ restart) has completed.
+
+### 4. Add the integration
+
+Settings → Devices & Services → Add Integration → **Tibber Vehicle** → this
+picks up the credential from step 3 and takes you straight to the OAuth2
+consent screen in your browser. Approve access, and the integration
+resolves your paired vehicle(s) and creates their sensor entities.
+
 ## Development
 
-See [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) for the full dev/test/
-deploy workflow (local repo → disposable Dockerized HA instance for fast
-iteration → `pytest-homeassistant-custom-component` for unit tests → HACS
-custom-repository install onto the real HA instance for live testing).
-Nothing here is installed on any real Home Assistant instance yet.
+See [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) for the dev/test workflow
+(local repo → disposable Dockerized HA instance for fast iteration →
+`pytest-homeassistant-custom-component` for unit tests → releasing a change
+to the real instance) and [`CONTRIBUTING.md`](CONTRIBUTING.md) if you want
+to contribute.
 
 ## License
 

@@ -16,11 +16,12 @@ cleanup:**
 
 | File | Update when... |
 |---|---|
+| `README.md` | The feature set, **any step a user needs to actually install/configure this** (Tibber client registration, HACS install, Application Credentials, adding the integration), or project status (scaffold → functional → published) changes. This is the file HACS shows a user browsing/installing the repo — there is no separate "Documentation tab" for HACS integrations the way Supervisor add-ons get one (confirmed against [Presenting your app](https://developers.home-assistant.io/docs/apps/presentation/) and the file layout of the sibling project `goosepaper-addon`, which *is* a Supervisor add-on and does split README/DOCS.md — that split doesn't apply here). Concretely: **installation/setup steps belong here, never only in `docs/DEVELOPMENT.md`** — that mistake happened once already (2026-08-21) and had to be fixed. |
 | `docs/CONTEXT.md` | New facts emerge about the Tibber Data API, the VW backend block, `homeassistant-volkswagencarnet`'s status, or how this project relates to `weconnect_mvp` — anything in the "why"/background category. |
 | `docs/DECISIONS.md` | A new design/architecture decision is made, or an existing one is revisited/reversed. |
-| `docs/DEVELOPMENT.md` | The dev/test/deploy workflow itself changes (e.g. a different local test setup, a new CI check, a changed HACS install process). |
-| `CHANGELOG.md` | Any notable code or behavior change — add an entry under `[Unreleased]` immediately, don't batch it up right before a release. |
-| `README.md` | The feature set, install instructions, or project status (scaffold → functional → published) changes. |
+| `docs/DEVELOPMENT.md` | The *developer-facing* workflow changes — local dev loop, testing, CI, versioning mechanics, or how a developer ships a change to the real instance. Never end-user setup steps (see `README.md` row above) — this file is not shown anywhere in Home Assistant's UI. |
+| `CONTRIBUTING.md` | The contribution process itself changes (branching/commit conventions, how issues should be reported). |
+| `CHANGELOG.md` | Any notable code or behavior change — add an entry under `[Unreleased]` immediately, don't batch it up right before a release. Written for someone using the integration, not a commit-by-commit developer log. |
 
 ## How to update — append, don't overwrite
 
