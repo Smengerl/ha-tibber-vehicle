@@ -38,12 +38,28 @@ as the primary workflow (see `docs/DECISIONS.md` for why).
 
 Once a change is committed and pushed to this repo's GitHub remote:
 
-1. In HACS on the real instance → **Custom repositories** → add this repo's
+1. **One-time:** register an OAuth2 client at
+   `data-api.tibber.com/clients/manage/` with scopes `data-api-homes-read` +
+   `data-api-vehicles-read`. As the **redirect URI, enter
+   `https://my.home-assistant.io/redirect/oauth`** — not the instance's own
+   address (e.g. `http://homeassistant.local:8123/...`), even though the
+   real instance has no public URL and is LAN-only.
+
+   *Why that works:* this is Home Assistant's standard, shared redirect
+   page for exactly this situation (every HA integration doing OAuth2 login
+   uses this same URL). Your browser — not any server — does the actual
+   trip back to the local instance: `my.home-assistant.io` bounces the
+   browser using an address it already has stored locally from earlier use
+   of the HA frontend, so nothing outside your LAN ever needs to reach your
+   HA instance directly. Full mechanism (traced from HA's own source code)
+   in `docs/DECISIONS.md`, under "The registered redirect_uri is always
+   `https://my.home-assistant.io/redirect/oauth`".
+2. In HACS on the real instance → **Custom repositories** → add this repo's
    URL, category "Integration" (only needed once).
-2. Install / update `tibber_vehicle` from HACS like any other custom
+3. Install / update `tibber_vehicle` from HACS like any other custom
    integration — same path `volkswagencarnet` already uses there, including
    its own update-tracking entity.
-3. Configure via Settings → Devices & Services → Add Integration →
+4. Configure via Settings → Devices & Services → Add Integration →
    "Tibber Vehicle" → complete the OAuth2 consent in the browser.
 
 ## 4. Versioning
