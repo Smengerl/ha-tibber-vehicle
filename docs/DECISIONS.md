@@ -41,6 +41,37 @@ Concretely this means:
 - The one-time interactive consent still happens through a browser, but via
   HA's frontend flow, not a `localhost:8515` redirect URI.
 
+## The registered redirect_uri is always `https://my.home-assistant.io/redirect/oauth` — works fine for a LAN-only instance
+
+Confirmed 2026-08-21 by reading `homeassistant/helpers/config_entry_oauth2_flow.py`
+in HA core directly (`async_get_redirect_uri`): as long as the `my`
+component is loaded — the default, part of `default_config`, true for
+Simon's real instance — HA always uses the constant
+`MY_AUTH_CALLBACK_PATH = "https://my.home-assistant.io/redirect/oauth"` as
+the redirect_uri sent to the OAuth provider, **regardless of whether the HA
+instance has any public URL configured.** This is the one value to register
+as the redirect URI when creating the OAuth2 client at
+`data-api.tibber.com/clients/manage/` — not the instance's local address
+(e.g. `http://homeassistant.local:8123`).
+
+This works for a purely LAN-only instance (confirmed relevant here: the
+real HA instance has no public/external URL, only
+`http://homeassistant.local:8123`) because the final hop back to the local
+instance is a **client-side-only browser redirect**, not a server-to-server
+call: `my.home-assistant.io/redirect/oauth` is a static page that reads
+which HA instance URL the browser last used (stored client-side) and
+302-redirects the *browser* to `<that instance>/auth/external/callback` —
+`my.home-assistant.io`'s own servers never need network access to the LAN
+instance.
+
+Fallback (only relevant if the `my` component is ever disabled): HA uses
+the current request's `HA-Frontend-Base` header instead, i.e. whatever URL
+the browser is actually on, appended with `/auth/external/callback` — that
+would need to be registered with Tibber verbatim instead, which is more
+fragile (exact-match dependent, and Tibber's registration UI may reject a
+non-HTTPS URI). Don't design `config_flow.py` around this fallback path;
+rely on the `my` component being present.
+
 ## `DataUpdateCoordinator` for polling, refresh-token-only at runtime
 
 Standard HA pattern: one `DataUpdateCoordinator` per config entry, polling
