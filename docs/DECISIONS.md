@@ -64,6 +64,22 @@ which HA instance URL the browser last used (stored client-side) and
 `my.home-assistant.io`'s own servers never need network access to the LAN
 instance.
 
+How the browser gets bounced back to the *specific* local instance: not
+via the OAuth `state` parameter (confirmed by reading
+`async_generate_authorize_url` — the JWT-encoded `state` only carries
+`flow_id` and the same `my.home-assistant.io` URL again, no local address).
+Instead `my.home-assistant.io` relies on **browser-local storage** (per its
+own FAQ: "your instance URL is stored locally in your browser and is never
+sent to any external service"), set the first time that browser used any
+`my.home-assistant.io` link from inside this HA instance. Practical
+implication: the very first OAuth link-account attempt in a fresh browser
+profile may prompt to confirm/select the instance; subsequent ones are
+transparent. Also confirmed: the security-sensitive code-for-token exchange
+(with the client secret) never touches `my.home-assistant.io` — it's a
+direct server-to-server call from HA's backend to
+`thewall.tibber.com/connect/token`, `my.home-assistant.io` is only involved
+in the initial browser redirect.
+
 Fallback (only relevant if the `my` component is ever disabled): HA uses
 the current request's `HA-Frontend-Base` header instead, i.e. whatever URL
 the browser is actually on, appended with `/auth/external/callback` — that
