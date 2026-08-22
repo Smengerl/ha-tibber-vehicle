@@ -1,12 +1,12 @@
 {
   "domain": "tibber_vehicle",
   "name": "Tibber Vehicle",
-  "codeowners": ["@simongerlach"],
+  "codeowners": ["@Smengerl"],
   "config_flow": true,
   "dependencies": ["application_credentials"],
-  "documentation": "https://github.com/simongerlach/ha-tibber-vehicle",
+  "documentation": "https://github.com/Smengerl/ha-tibber-vehicle",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/simongerlach/ha-tibber-vehicle/issues",
+  "issue_tracker": "https://github.com/Smengerl/ha-tibber-vehicle/issues",
   "requirements": [],
   "version": "0.1.0"
 }

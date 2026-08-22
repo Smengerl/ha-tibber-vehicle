@@ -40,7 +40,7 @@ identity. Full comparison and reasoning in
 [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
 | Entity | Type | Tibber capability id | Unit / device class |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Battery level | sensor | `storage.stateOfCharge` | %, `battery`, measurement |
 | Battery target charge level | sensor | `storage.targetStateOfCharge` | %, `battery` |
 | Electric range | sensor | `range.remaining` | km (converted from m), `distance`, measurement |
@@ -124,7 +124,7 @@ to the real instance) and [`CONTRIBUTING.md`](CONTRIBUTING.md) if you want
 to contribute.
 
 Background on why this project exists and how it relates to sibling
-projects on the same machine is in [`docs/CONTEXT.md`](docs/CONTEXT.md).
+projects is in [`docs/CONTEXT.md`](docs/CONTEXT.md).
 
 ## License
 
