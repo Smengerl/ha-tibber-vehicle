@@ -8,6 +8,16 @@ that level of detail instead of writing it out here.
 
 ## [Unreleased]
 
+### Changed
+- The GitHub repository was switched from private to public (2026-08-22).
+  Reason: HACS categorically cannot install from private repositories
+  ("Private GitHub repositories can not be used with HACS at all", per
+  HACS's own FAQ) — there is no token-based workaround. Confirmed no
+  secrets/tokens/private network details were ever tracked in git before
+  flipping visibility. The `README.md` install steps (HACS custom
+  repository) now work as written; they didn't need any content change,
+  only the repo's visibility did.
+
 ### Added
 - Project scaffold: repo structure, HACS/manifest boilerplate, dev
   tooling (`pytest-homeassistant-custom-component`, disposable Docker dev
