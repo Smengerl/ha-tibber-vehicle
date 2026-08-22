@@ -8,6 +8,15 @@ that level of detail instead of writing it out here.
 
 ## [Unreleased]
 
+### Fixed
+- `README.md` step 1 didn't say to give the Tibber OAuth2 client a
+  recognizable name. Added: that name is what Tibber's own consent screen
+  actually shows during login (step 4) — confirmed against HA core's
+  `application_credentials` source, where the "Name" field on HA's own
+  Application Credential form only labels HA's local "pick implementation"
+  step and is never sent to Tibber. Easy to mix the two up; a prior version
+  of this guidance (given in chat, not yet written down) had it backwards.
+
 ### Changed
 - The GitHub repository was switched from private to public (2026-08-22).
   Reason: HACS categorically cannot install from private repositories

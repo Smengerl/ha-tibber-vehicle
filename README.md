@@ -62,6 +62,12 @@ No write/control support is possible — the Tibber Data API is read-only
 Go to [`data-api.tibber.com/clients/manage/`](https://data-api.tibber.com/clients/manage/),
 log in with your Tibber account, and create a new client:
 
+- Client name: pick something recognizable, e.g. `Home Assistant - Tibber
+  Vehicle`. This is the name **Tibber's own consent screen will show you**
+  when you authorize access in step 4 — it has nothing to do with the
+  "Name" field you may later give the credential inside Home Assistant
+  (that one is purely local to HA's own UI, for telling multiple
+  credentials apart, and is never sent to Tibber).
 - Scopes: select at least `data-api-homes-read` and `data-api-vehicles-read`.
 - Redirect URI: enter exactly **`https://my.home-assistant.io/redirect/oauth`**
   — not your own instance's address, even if (like the primary target
