@@ -47,13 +47,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: TibberVehicleConfigEntry
 
     client = TibberVehicleApiClient(async_get_clientsession(hass), _access_token)
 
-    coordinator = TibberVehicleCoordinator(
-        hass,
-        entry,
-        client,
-        home_id=entry.data["home_id"],
-        device_id=entry.data["device_id"],
-    )
+    coordinator = TibberVehicleCoordinator(hass, entry, client)
     await coordinator.async_config_entry_first_refresh()
 
     entry.runtime_data = coordinator

@@ -8,6 +8,13 @@ coordinator only ever reads an already-valid token through the API
 client's `access_token_provider` callback wired up in `__init__.py` — see
 docs/DECISIONS.md for why token refresh itself is entirely
 `OAuth2Session`'s job, not something this class does.
+
+Polls *every* vehicle paired with the account on each cycle (re-listed via
+`async_get_all_vehicles` every time, not cached from config-flow time) and
+keyed by device id, so `sensor.py` can create one set of entities per
+vehicle. New vehicles paired in Tibber after setup are picked up on the
+next integration reload — there's no live add/remove of devices between
+reloads (see docs/DECISIONS.md's known limitations).
 """
 from __future__ import annotations
 
@@ -26,8 +33,8 @@ _LOGGER = logging.getLogger(__name__)
 type TibberVehicleConfigEntry = ConfigEntry[TibberVehicleCoordinator]
 
 
-class TibberVehicleCoordinator(DataUpdateCoordinator[dict]):
-    """Polls a single Tibber-paired vehicle's device detail."""
+class TibberVehicleCoordinator(DataUpdateCoordinator[dict[str, dict]]):
+    """Polls device detail for every vehicle paired with this Tibber account."""
 
     config_entry: TibberVehicleConfigEntry
 
@@ -36,8 +43,6 @@ class TibberVehicleCoordinator(DataUpdateCoordinator[dict]):
         hass: HomeAssistant,
         config_entry: TibberVehicleConfigEntry,
         client: TibberVehicleApiClient,
-        home_id: str,
-        device_id: str,
     ) -> None:
         """Initialize."""
         super().__init__(
@@ -48,11 +53,13 @@ class TibberVehicleCoordinator(DataUpdateCoordinator[dict]):
             update_interval=timedelta(seconds=DEFAULT_UPDATE_INTERVAL_SECONDS),
         )
         self._client = client
-        self._home_id = home_id
-        self._device_id = device_id
 
-    async def _async_update_data(self) -> dict:
+    async def _async_update_data(self) -> dict[str, dict]:
         try:
-            return await self._client.async_get_device(self._home_id, self._device_id)
+            vehicles = await self._client.async_get_all_vehicles()
+            return {
+                device["id"]: await self._client.async_get_device(home_id, device["id"])
+                for home_id, device in vehicles
+            }
         except TibberVehicleApiError as err:
             raise UpdateFailed(f"Error communicating with Tibber API: {err}") from err

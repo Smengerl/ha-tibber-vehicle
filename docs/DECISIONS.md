@@ -137,12 +137,14 @@ and the modern `entry.runtime_data` pattern (a typed
 `hass.data[DOMAIN][entry_id]` dict.
 
 - **`config_flow.py`**: `extra_authorize_data` returns the scope string
-  from `const.OAUTH2_SCOPES`. `async_oauth_create_entry` does a one-shot
-  API call (`TibberVehicleApiClient.async_find_first_vehicle`, using the
-  fresh access token directly — no `OAuth2Session` yet, since the config
-  entry doesn't exist until this method returns) to resolve which vehicle
-  this Tibber account exposes, sets the entry's `unique_id` to its VIN, and
-  stores `home_id`/`device_id`/`vin` alongside the OAuth `data` dict.
+  from `const.OAUTH2_SCOPES`. `async_oauth_create_entry` confirms the
+  account has at least one vehicle (`TibberVehicleApiClient.
+  async_get_all_vehicles`, using the fresh access token directly — no
+  `OAuth2Session` yet, since the config entry doesn't exist until this
+  method returns), sets the entry's `unique_id` from the account's home
+  ids, and creates the entry with no extra custom fields in `data` — see
+  "One account, all its vehicles" below for why this changed from an
+  earlier single-vehicle design.
 - **`api.py`** (new): a thin `TibberVehicleApiClient` wrapping the three
   `GET` endpoints this integration needs. Response envelope shapes
   (`{"homes": [...]}`, `{"devices": [...]}`) are taken directly from
@@ -158,17 +160,17 @@ and the modern `entry.runtime_data` pattern (a typed
   that re-validates the session before every use, so token refresh is
   fully transparent to `api.py`.
 - **`coordinator.py`** / **`sensor.py`**: implemented as designed above —
-  `_async_update_data` calls `async_get_device`, wraps
-  `TibberVehicleApiError` as `UpdateFailed`; sensors read their capability
-  id out of `coordinator.data["capabilities"]`, converting `range.remaining`
-  from meters to km.
+  `_async_update_data` re-lists every vehicle and calls `async_get_device`
+  for each, wraps `TibberVehicleApiError` as `UpdateFailed`; sensors read
+  their capability id out of their own vehicle's `capabilities` list,
+  converting `range.remaining` from meters to km.
 - **`entity.py`** (new, added after the first pass missed it): a shared
   `TibberVehicleEntity(CoordinatorEntity)` base class setting
-  `_attr_device_info`, so all five entities group under one HA **device**
-  representing the vehicle itself (identified by VIN, manufacturer/model
-  from the device detail's `info` object) — this is the actual point of
-  the integration ("the car should appear as a device", not five loose
-  entities with no device grouping). Modeled on Spotify's own `entity.py`,
+  `_attr_device_info`, so each vehicle's five entities group under their
+  own HA **device** (identified by VIN, manufacturer/model from the device
+  detail's `info` object) — this is the actual point of the integration
+  ("the car should appear as a device", not loose entities with no device
+  grouping). Modeled on Spotify's own `entity.py`,
   but **without** `entry_type=DeviceEntryType.SERVICE` — Spotify sets that
   because its "device" is a cloud account; ours is a physical vehicle, so
   it should register as a regular device, not get folded into HA's
@@ -253,17 +255,66 @@ v1:**
   recovery, the config entry will start failing rather than prompting the
   user to re-link, unlike Spotify's `async_step_reauth`. A real gap, but
   additive — doesn't change anything about the flow already built.
-- **First vehicle wins, no multi-vehicle support.** `async_find_first_vehicle`
-  stops at the first device found across all homes. Fine for the single
-  paired VW this was built against; a household with multiple Tibber-paired
-  vehicles would need one config entry per vehicle, which isn't wired up
-  (the unique-id-per-VIN design would support it, but the config flow
-  doesn't yet offer a picker step).
+- **No live add/remove of vehicles between reloads.** Entities are created
+  once at setup from whatever `async_get_all_vehicles` returns at that
+  moment. A vehicle paired in Tibber *after* the integration was set up
+  won't appear until the integration is reloaded — see "One account, all
+  its vehicles" below for why this is a deliberate, low-cost scope
+  boundary rather than something worth building full dynamic-device
+  support for right now.
+
+## One account, all its vehicles — not a picker, not one-entry-per-vehicle
+
+2026-08-24, superseding the "first vehicle wins" limitation above (kept
+there with a strikethrough-equivalent note rather than deleted, per this
+repo's append-don't-overwrite convention): Simon asked why the integration
+couldn't simply add every vehicle paired to the Tibber account at once,
+instead of requiring a picker step or one login per vehicle. That's a
+better fit for how the underlying API actually works — `async_get_homes`
+and `async_get_all_vehicles` already return *everything* the account can
+see in one shot, so making the user choose a subset (or repeat the OAuth
+dance once per vehicle) would be added friction for no real benefit.
+
+Concretely:
+- **One config entry now represents one Tibber *account*, not one
+  vehicle.** `config_flow.py`'s `async_oauth_create_entry` no longer
+  resolves a single vehicle — it only confirms the account has at least
+  one, then creates the entry with the OAuth `data` unchanged (no extra
+  `home_id`/`device_id`/`vin` fields; those were tied to the old
+  single-vehicle design and are gone).
+- **`unique_id` had to change meaning accordingly** — it's no longer a
+  vehicle's VIN (there can be several), but a stand-in for "this Tibber
+  account": the sorted, joined set of home ids the token can see. There's
+  no dedicated account/user-id endpoint in scope here to use instead; home
+  ids are stable enough in practice (a user's homes rarely change) for
+  this to reliably block linking the *same* account twice, which is all
+  it needs to do. It has no bearing on how many vehicles that account has.
+- **`manifest.json`'s `integration_type` changed from `device` to `hub`**
+  to match — one config entry can now genuinely create multiple devices,
+  which is exactly what `hub` means in HA's integration-type taxonomy
+  (`device` is for a config entry that *is* one device).
+- **`TibberVehicleCoordinator` now polls and returns a dict keyed by
+  device id** (every vehicle's full detail, re-listed from
+  `async_get_all_vehicles` every cycle — not cached from config-flow time)
+  instead of a single device's detail. `TibberVehicleEntity` takes a
+  `device_id` and reads its own slice via a `_device_data` property.
+  `sensor.py`'s `async_setup_entry` creates the same 5 `SENSOR_DESCRIPTIONS`
+  once per `device_id` in `coordinator.data`, not once total.
+- **Still explicitly out of scope:** a vehicle newly paired in Tibber
+  after HA setup won't appear until the integration is reloaded (see the
+  known-limitations bullet above) — proper Gold-tier "dynamic devices"
+  (adding entities live as the coordinator discovers new ones, without a
+  reload) would need a coordinator-listener pattern tracking known device
+  ids and isn't built. Re-listing vehicles fresh on every poll (rather
+  than only at config-flow time) was the cheap, high-value part of getting
+  this right; live dynamic addition is a separate, bigger piece of work
+  that can follow later if it's ever actually needed.
 
 ## `DataUpdateCoordinator` for polling, refresh-token-only at runtime
 
-Standard HA pattern: one `DataUpdateCoordinator` per config entry, polling
-`GET /v1/homes/{homeId}/devices/{deviceId}` on an interval (`const.
+Standard HA pattern: one `DataUpdateCoordinator` per config entry, re-listing
+every vehicle on the account and polling `GET
+/v1/homes/{homeId}/devices/{deviceId}` for each on an interval (`const.
 DEFAULT_UPDATE_INTERVAL_SECONDS = 300`, i.e. 5 minutes) using only
 non-interactive refresh-token exchange. This mirrors the separation
 `tibber_client.py`'s `TokenStore` already has between one-time interactive
@@ -341,3 +392,27 @@ not eyeballed) with a hollow-outline lightning bolt in the same
 line-drawing style, paired with a stylized vehicle silhouette in matching
 stroke weight — visually ties this integration to Tibber (its actual data
 source) while the vehicle glyph signals what it's specifically for.
+
+## Retry-with-backoff and an explicit request timeout in `api.py`
+
+2026-08-24, found during the pre-1.0.0 review: `api.py`'s `_get` had
+neither. Both fixed:
+
+- **Retry with exponential backoff + full jitter on 429/5xx, never on
+  400/401/403/404** — exactly the guidance this project's own research
+  already documented (`docs/CONTEXT.md` §3, sourced from Tibber's own
+  docs) but had never actually implemented. 3 retries, base 1s doubling,
+  `random.uniform(0, backoff)` for the jitter. Low practical risk before
+  this fix (the 5-minute poll interval already acted as a de facto,
+  generous backoff between coordinator cycles), but leaving a
+  self-documented requirement unimplemented wasn't a good look going into
+  a 1.0 release.
+- **Explicit 30s total request timeout**, replacing aiohttp's own default
+  of 300s for HA's shared client session (confirmed by reading
+  `aiohttp_client._async_create_clientsession` — it passes no `timeout=`
+  override, so the shared session inherits aiohttp's built-in default).
+  Not a correctness fix — `DataUpdateCoordinator._async_refresh` already
+  catches `TimeoutError` and degrades gracefully regardless of which
+  timeout value fires — but there's no reason to let a stuck Tibber
+  request block up to a full 5-minute poll interval when Tibber's API
+  should normally respond in well under a second.

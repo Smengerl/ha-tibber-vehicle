@@ -3,8 +3,9 @@
 Entity setup modeled on Home Assistant core's Spotify integration —
 SensorEntityDescription tuple + typed ConfigEntry.runtime_data instead of
 hass.data[DOMAIN]. All five of Tibber's vehicle capabilities map to
-sensors here. Names/icons/units/device_classes/state_classes are matched
-1:1 to the equivalent entities in the
+sensors here, once per vehicle paired with the account (see
+coordinator.py). Names/icons/units/device_classes/state_classes are
+matched 1:1 to the equivalent entities in the
 robinostlund/homeassistant-volkswagencarnet integration (backed by the
 `volkswagencarnet` PyPI package's vw_dashboard.py) so a user switching
 between a direct VW connection and this Tibber-backed one sees the same
@@ -33,6 +34,10 @@ from .const import (
 )
 from .coordinator import TibberVehicleConfigEntry, TibberVehicleCoordinator
 from .entity import TibberVehicleEntity
+
+# Entities are populated entirely from data the coordinator already fetched
+# on its own schedule — no per-entity I/O to throttle.
+PARALLEL_UPDATES = 0
 
 SENSOR_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
     # Matches volkswagencarnet's "battery_level" sensor.
@@ -91,31 +96,33 @@ async def async_setup_entry(
     entry: TibberVehicleConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up Tibber Vehicle sensors from a config entry."""
+    """Set up Tibber Vehicle sensors — one set of 5 per paired vehicle."""
     coordinator = entry.runtime_data
     async_add_entities(
-        TibberVehicleSensor(coordinator, description)
+        TibberVehicleSensor(coordinator, device_id, description)
+        for device_id in coordinator.data
         for description in SENSOR_DESCRIPTIONS
     )
 
 
 class TibberVehicleSensor(TibberVehicleEntity, SensorEntity):
-    """A single capability of a Tibber-paired vehicle."""
+    """A single capability of one Tibber-paired vehicle."""
 
     def __init__(
         self,
         coordinator: TibberVehicleCoordinator,
+        device_id: str,
         description: SensorEntityDescription,
     ) -> None:
         """Initialize."""
-        super().__init__(coordinator)
+        super().__init__(coordinator, device_id)
         self.entity_description = description
-        self._attr_unique_id = f"{coordinator.config_entry.unique_id}_{description.key}"
+        self._attr_unique_id = f"{device_id}_{description.key}"
 
     @property
     def native_value(self) -> str | int | float | None:
         """Return the capability's current value, straight off the coordinator."""
-        for capability in self.coordinator.data.get("capabilities", []):
+        for capability in self._device_data.get("capabilities", []):
             if capability.get("id") != self.entity_description.key:
                 continue
             value = capability.get("value")

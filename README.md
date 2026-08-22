@@ -29,10 +29,13 @@ depending on VW's own, currently-unreliable API access.
 
 ## What it exposes
 
-Per paired vehicle, 5 entities — this is the *complete* data surface the
-Tibber Data API offers for vehicles, confirmed by direct inspection of its
-OpenAPI schema (no doors/climate/position/lock data exists in this API at
-all, and no write/control support is possible either). Name, icon, unit,
+Logging in adds **every vehicle paired to your Tibber account** at once —
+each as its own Home Assistant device, no picker step, no need to repeat
+the login per vehicle. Per vehicle, 5 entities — this is the *complete*
+data surface the Tibber Data API offers for vehicles, confirmed by direct
+inspection of its OpenAPI schema (no doors/climate/position/lock data
+exists in this API at all, and no write/control support is possible
+either). Name, icon, unit,
 and device class are matched to the equivalent entity in
 `homeassistant-volkswagencarnet` wherever that makes sense, so switching
 between the two — or running both side by side — shows consistent entity
@@ -112,8 +115,21 @@ Vehicle" isn't selectable until the HACS install (+ restart) has completed.
 Or manually: Settings → Devices & Services → Add Integration → **Tibber
 Vehicle**. Either way, this picks up the credential from step 3 and takes
 you straight to the OAuth2 consent screen in your browser. Approve access,
-and the integration resolves your paired vehicle and creates its device
-with the entities listed above.
+and the integration creates one device per vehicle paired to that Tibber
+account, each with the entities listed above. A vehicle paired in Tibber
+*after* this step won't appear until you reload the integration (Settings
+→ Devices & Services → Tibber Vehicle → ⋮ → Reload).
+
+## Removal
+
+Settings → Devices & Services → **Tibber Vehicle** → ⋮ → Delete. This
+removes all of that account's vehicle devices and entities from Home
+Assistant, and revokes the stored OAuth2 tokens' local copy — it does
+**not** revoke the OAuth2 client itself at Tibber. To fully undo the
+one-time setup from step 1, also delete the client at
+[`data-api.tibber.com/clients/manage/`](https://data-api.tibber.com/clients/manage/).
+If you installed via HACS and want to remove the integration's files too,
+uninstall it from there afterwards.
 
 ## Development
 

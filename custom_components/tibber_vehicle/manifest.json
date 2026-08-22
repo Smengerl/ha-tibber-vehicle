@@ -5,6 +5,7 @@
   "config_flow": true,
   "dependencies": ["application_credentials"],
   "documentation": "https://github.com/Smengerl/ha-tibber-vehicle",
+  "integration_type": "hub",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/Smengerl/ha-tibber-vehicle/issues",
   "requirements": [],

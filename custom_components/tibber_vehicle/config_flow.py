@@ -3,15 +3,20 @@
 OAuth2 login flow, structured after Home Assistant core's Spotify
 integration (homeassistant/components/spotify/config_flow.py) — same
 AbstractOAuth2FlowHandler + extra_authorize_data + async_oauth_create_entry
-shape, adapted to resolve a paired vehicle instead of a user profile. See
-docs/DECISIONS.md for why HA's built-in OAuth2 helper was chosen over
-weconnect_mvp's tibber_client.py loopback-server approach, and for where
-the resulting token ends up stored (the config entry itself, not a file
-this integration manages).
+shape, adapted to confirm the Tibber account has at least one vehicle
+instead of resolving a user profile. See docs/DECISIONS.md for why HA's
+built-in OAuth2 helper was chosen over weconnect_mvp's tibber_client.py
+loopback-server approach, and for where the resulting token ends up
+stored (the config entry itself, not a file this integration manages).
+
+One config entry = one Tibber account; every vehicle paired to that
+account becomes its own device (see coordinator.py/sensor.py) — there is
+deliberately no vehicle-picker step here, since the point is to expose
+everything the account already has, not make the user choose a subset.
 
 Deliberately out of scope for now (see docs/DECISIONS.md's known
-limitations): reauth flow and multi-vehicle support. Neither blocks a
-working single-vehicle login — both are natural, additive follow-ups.
+limitations): reauth flow, and picking up a vehicle paired *after* setup
+without reloading the integration. Neither blocks a working login.
 """
 from __future__ import annotations
 
@@ -48,12 +53,13 @@ class TibberVehicleOAuth2FlowHandler(
         return {"scope": " ".join(OAUTH2_SCOPES)}
 
     async def async_oauth_create_entry(self, data: dict[str, Any]) -> ConfigFlowResult:
-        """Create an entry, after resolving which vehicle this token can see."""
+        """Create an entry, after confirming this Tibber account has a vehicle."""
         access_token = data[CONF_TOKEN][CONF_ACCESS_TOKEN]
 
         async def _static_token() -> str:
-            # Only used for this one-shot resolution call, before the config
-            # entry (and with it, OAuth2Session-backed refresh) exists yet.
+            # Only used for these one-shot resolution calls, before the
+            # config entry (and with it, OAuth2Session-backed refresh)
+            # exists yet.
             return access_token
 
         client = TibberVehicleApiClient(
@@ -61,22 +67,26 @@ class TibberVehicleOAuth2FlowHandler(
         )
 
         try:
-            found = await client.async_find_first_vehicle()
+            homes = await client.async_get_homes()
+            vehicles = await client.async_get_all_vehicles()
         except TibberVehicleApiError:
-            self.logger.exception("Error while resolving paired Tibber vehicle")
+            self.logger.exception("Error while resolving paired Tibber vehicles")
             return self.async_abort(reason="connection_error")
 
-        if found is None:
+        if not vehicles:
             return self.async_abort(reason="no_vehicle_found")
 
-        home_id, device = found
-        vin = device.get("externalId") or device["id"]
-        name = device.get("info", {}).get("name") or "Tibber Vehicle"
-
-        await self.async_set_unique_id(vin)
+        # Homes are a reasonably stable stand-in for "this Tibber account" —
+        # there's no dedicated account/user-id endpoint in scope here (see
+        # docs/DECISIONS.md). This only blocks linking the *same* account
+        # twice; it has no bearing on how many vehicles that account has.
+        await self.async_set_unique_id("|".join(sorted(home["id"] for home in homes)))
         self._abort_if_unique_id_configured()
 
-        return self.async_create_entry(
-            title=name,
-            data={**data, "home_id": home_id, "device_id": device["id"], "vin": vin},
-        )
+        names = [
+            device.get("info", {}).get("name") or device.get("externalId") or device["id"]
+            for _, device in vehicles
+        ]
+        title = ", ".join(names) if len(names) <= 3 else f"{len(names)} vehicles"
+
+        return self.async_create_entry(title=title, data=data)

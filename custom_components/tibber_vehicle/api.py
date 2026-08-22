@@ -9,15 +9,26 @@ supplied by the caller via `access_token_provider` rather than handled
 here — this client never sees the OAuth2 flow itself, matching how
 Spotify's `spotifyaio.SpotifyClient.refresh_token_function` keeps API
 access and token refresh as separate concerns (see docs/DECISIONS.md).
+
+Retries with exponential backoff + full jitter on 429/5xx, per Tibber's
+own documented guidance (docs/CONTEXT.md §3) — never on 400/401/403/404,
+which mean "fix the request", not "try again".
 """
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Awaitable, Callable
+import random
 from typing import Any
 
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientTimeout
 
 from .const import API_BASE, USER_AGENT
+
+REQUEST_TIMEOUT = ClientTimeout(total=30)
+MAX_RETRIES = 3
+BASE_BACKOFF_SECONDS = 1.0
+RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
 
 class TibberVehicleApiError(Exception):
@@ -37,16 +48,28 @@ class TibberVehicleApiClient:
 
     async def _get(self, path: str) -> dict[str, Any]:
         token = await self._access_token_provider()
-        async with self._session.get(
-            f"{API_BASE}{path}",
-            headers={"Authorization": f"Bearer {token}", "User-Agent": USER_AGENT},
-        ) as response:
-            if response.status != 200:
+        headers = {"Authorization": f"Bearer {token}", "User-Agent": USER_AGENT}
+
+        for attempt in range(MAX_RETRIES + 1):
+            async with self._session.get(
+                f"{API_BASE}{path}", headers=headers, timeout=REQUEST_TIMEOUT
+            ) as response:
+                if response.status == 200:
+                    return await response.json()
+
+                if response.status in RETRYABLE_STATUS_CODES and attempt < MAX_RETRIES:
+                    backoff = BASE_BACKOFF_SECONDS * (2**attempt)
+                    await asyncio.sleep(random.uniform(0, backoff))
+                    continue
+
                 body = await response.text()
                 raise TibberVehicleApiError(
                     f"Tibber API request to {path} failed: {response.status} {body}"
                 )
-            return await response.json()
+
+        raise TibberVehicleApiError(
+            f"Tibber API request to {path} failed after {MAX_RETRIES} retries"
+        )
 
     async def async_get_homes(self) -> list[dict[str, Any]]:
         """GET /homes — the customer's homes."""
@@ -62,19 +85,24 @@ class TibberVehicleApiClient:
         """GET /homes/{homeId}/devices/{deviceId} — full device state."""
         return await self._get(f"/homes/{home_id}/devices/{device_id}")
 
-    async def async_find_first_vehicle(self) -> tuple[str, dict[str, Any]] | None:
-        """Return (home_id, device) for the first device found, or None.
+    async def async_get_all_vehicles(self) -> list[tuple[str, dict[str, Any]]]:
+        """Return (home_id, device) for every vehicle across all homes.
 
-        With only the `data-api-vehicles-read` scope granted (this
+        Vehicles are "ambulatory" and appear under every home the token can
+        see (confirmed live, see docs/CONTEXT.md §3), so de-duplication by
+        device id is required to avoid counting the same vehicle once per
+        home. With only the `data-api-vehicles-read` scope granted (this
         integration never requests chargers/thermostats/etc.), the devices
         endpoint returns vehicles only — confirmed live, see
         weconnect_mvp's tibber_client.py `vehicles()` docstring — so no
-        extra category filtering is needed here. Multiple vehicles across
-        multiple homes aren't handled yet (first one wins) — see
-        docs/DECISIONS.md's known limitations.
+        extra category filtering is needed here.
         """
+        seen: set[str] = set()
+        result: list[tuple[str, dict[str, Any]]] = []
         for home in await self.async_get_homes():
-            devices = await self.async_get_devices(home["id"])
-            if devices:
-                return home["id"], devices[0]
-        return None
+            for device in await self.async_get_devices(home["id"]):
+                device_id = device.get("id")
+                if device_id and device_id not in seen:
+                    seen.add(device_id)
+                    result.append((home["id"], device))
+        return result
