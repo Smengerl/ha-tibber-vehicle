@@ -109,6 +109,23 @@ config. Don't silently start building toward these — if one comes up
 naturally, mention it and let the user decide whether it's worth doing now
 or staying deferred, same as any other scope decision in this repo.
 
+### CI must stay green — always, especially the `hacs` job
+
+`.github/workflows/validate.yml`'s three jobs (`hassfest`, `hacs`,
+`pytest`) must all pass on every push. Treat a red run as a blocker to fix
+in the same change, not something to notice in passing and defer. The
+`hacs` job specifically runs `hacs/action`'s full validation — 9 checks
+(topics, description, license, archived status, issues, repository
+information, `hacs.json`, `manifest.json`, brand assets) — and that's not
+just a nice-to-have: it's the actual automated bar for HACS
+default-repository eligibility, the same checks a `hacs/default`
+submission would be judged against. It was red on **every single push**
+from this repo's first commit until the missing brand assets were found
+purely by chance during an unrelated pre-1.0.0 review (2026-08-24) —
+nobody had actually looked at the CI status before then. After every push
+that could plausibly affect any of the 9 checks, verify with
+`gh run list`/`gh run view` rather than assuming green.
+
 ## Known pitfalls — re-check these when touching related code
 
 Found during actual reviews (`docs/DECISIONS.md` has the full story for
@@ -121,6 +138,7 @@ whenever you touch the trigger, not just when reviewing on request:
 | Adding any new Python language feature anywhere in `custom_components/tibber_vehicle/*.py` (new syntax, not just new logic — e.g. another PEP 695 `type` statement, a `match` statement, new stdlib-version-gated API) | Confirm it's available on the Python version Home Assistant actually ships for `hacs.json`'s declared `"homeassistant"` minimum, not just whatever Python this dev environment happens to run. `type` statements already forced `2024.4.0` as the floor (HA didn't require Python 3.12 until that release) — a stricter feature could force it higher again. | `hacs.json` declared `2024.1.0` while the code required Python 3.12 (`2024.4.0`+) — would have crashed with a `SyntaxError` on import for anyone still on an in-range-but-actually-incompatible version. |
 | Adding a new entity platform or a new entity base class (anything that isn't a `TibberVehicleSensor` subclassing `TibberVehicleEntity`) | Make sure it still goes through `TibberVehicleEntity` (or otherwise reimplements its `available` override) — don't inherit `CoordinatorEntity` directly and assume the default `available` is enough. | `CoordinatorEntity`'s default `available` only checks the whole coordinator's `last_update_success`, not whether *this* vehicle's `device_id` is still in `coordinator.data`. A new platform built without going through `TibberVehicleEntity` would silently reintroduce the "removed vehicle stuck at `unknown` forever" bug already fixed once. |
 | Writing a docstring/comment that cites *why* something is true or *where* a fact was confirmed | Cite something a reader of this public repo can actually reach (a section of `docs/*.md` in this repo, an official Tibber/HA doc URL, a specific commit) — never an external private/inaccessible project as the source of record. | `api.py`/`const.py`/`config_flow.py` cited `weconnect_mvp` (a private sibling project on the original maintainer's machine) as where facts were confirmed — a dead-end reference for anyone else reading this code. |
+| Any change to `manifest.json`, `hacs.json`, the GitHub repo's topics/description, or the brand assets under `custom_components/tibber_vehicle/brand/` | Push, then actually check the `hacs` CI job (`gh run list`/`gh run view`) — don't assume it's still green. | This is exactly the class of change that silently broke the `hacs` job for this repo's entire history (see "CI must stay green" above) — it's cheap to re-check and expensive to leave broken unnoticed. |
 
 ## Before starting new work in this repo
 
