@@ -13,10 +13,12 @@ Reads your EV's battery level, range, and charging/plug status into Home
 Assistant via the official [Tibber Data API][tibber-data-api] — for every
 vehicle paired inside your Tibber account, regardless of make.
 
-**Note:** This integration depends entirely on the Tibber Data API. It only
-works for vehicles already paired inside the Tibber app, and it exposes
-exactly the five values Tibber's API makes available for vehicles —
-nothing more (no doors, climate, position, or lock control; see
+**Note:** This integration is **read-only** — it cannot start/stop
+charging, lock/unlock, or control anything about your vehicle, regardless
+of what your car itself supports. It depends entirely on the Tibber Data
+API: it only works for vehicles already paired inside the Tibber app, and
+it exposes exactly the five values Tibber's API makes available for
+vehicles — nothing more (no doors, climate, position, or lock data; see
 [Known Issues / Limitations](#known-issues--limitations)).
 
 ![Tibber Vehicle device with its entities in Home Assistant](docs/images/screenshot.png)
@@ -42,11 +44,12 @@ nothing more (no doors, climate, position, or lock control; see
       Home Assistant's standard shared redirect page for OAuth2 account
       linking, and it works regardless of whether your instance is
       reachable from the internet. Full mechanism traced from HA's own
-      source code in [`docs/DECISIONS.md`](docs/DECISIONS.md).
+      source code in [`docs/DECISIONS.md`][decisions-redirect-uri].
    1. Note down the **client ID and secret** shown after creation — the
       secret is only displayed once.
-1. **Home Assistant** with [HACS][hacs] installed, version 2024.1.0 or
-   newer.
+1. **Home Assistant** with [HACS][hacs] installed, version 2024.4.0 or
+   newer (this integration's code requires the Python 3.12+ that HA
+   bundled starting with that release).
 
 ## Installation
 
@@ -106,6 +109,13 @@ browser.
    reload the integration (Settings → Devices & Services → Tibber Vehicle
    → ⋮ → Reload).
 
+**Multiple Tibber accounts** (e.g. two people in the same household, each
+with their own Tibber account and car): repeat step 2 above once per
+account, logging in with the different Tibber account each time — you can
+reuse the same Application Credential from step 1, no need to register a
+separate one per account. Each login becomes its own independent set of
+devices; nothing about this integration limits it to a single account.
+
 ## Entities
 
 One Home Assistant device per paired vehicle, with 5 entities each — the
@@ -115,7 +125,7 @@ device classes are matched to the equivalent entity in
 [`robinostlund/homeassistant-volkswagencarnet`][volkswagencarnet] wherever
 that makes sense, so switching between the two — or running both side by
 side — shows consistent entity identity. Full comparison and reasoning in
-[`docs/DECISIONS.md`](docs/DECISIONS.md).
+[`docs/DECISIONS.md`][decisions-entities].
 
 - [`sensor.<vehicle_name>_battery_level`](#sensorvehicle_name_battery_level)
 - [`sensor.<vehicle_name>_battery_target_charge_level`](#sensorvehicle_name_battery_target_charge_level)
@@ -123,10 +133,11 @@ side — shows consistent entity identity. Full comparison and reasoning in
 - [`sensor.<vehicle_name>_plug_status`](#sensorvehicle_name_plug_status)
 - [`sensor.<vehicle_name>_charging_state`](#sensorvehicle_name_charging_state)
 
-All entities update every 5 minutes (Tibber's API documents no shorter
-recommended cadence — see [`docs/DECISIONS.md`](docs/DECISIONS.md) for why
-polling faster wouldn't gain anything). None require any permission beyond
-the two scopes selected in [Prerequisites](#prerequisites).
+All entities update every 5 minutes, a fixed interval (see
+[Known Issues / Limitations](#known-issues--limitations)); Tibber's API
+documents no shorter recommended cadence — see [`docs/DECISIONS.md`][decisions-polling]
+for why polling faster wouldn't gain anything. None require any permission
+beyond the two scopes selected in [Prerequisites](#prerequisites).
 
 ### `sensor.<vehicle_name>_battery_level`
 
@@ -160,7 +171,7 @@ Tibber capability: `connector.status`
 
 _Stays a plain sensor here rather than a `binary_sensor` (unlike VW
 Connect's equivalent) so all three values stay directly visible — see
-`docs/DECISIONS.md`._
+[`docs/DECISIONS.md`][decisions-entities]._
 
 ### `sensor.<vehicle_name>_charging_state`
 
@@ -186,6 +197,11 @@ uninstall it from there afterwards.
 - **Read-only.** The Tibber Data API exposes no control endpoints for
   vehicles — there is no way to start/stop charging or lock/unlock from
   this integration, regardless of what your car itself supports.
+- **Verified end-to-end against a Volkswagen (Enode-backed) vehicle.**
+  Tibber's capability fields are generic and documented the same way for
+  every vehicle brand it supports, so other Enode-backed brands should
+  work identically — but that hasn't been separately confirmed yet. If
+  you try this with a non-VW vehicle, [let us know][issues] how it goes.
 - **No automatic reauthentication.** If Tibber revokes or expires your
   refresh token outside the normal OAuth2 refresh cycle, you'll need to
   remove and re-add the integration rather than being prompted to
@@ -193,6 +209,15 @@ uninstall it from there afterwards.
 - **Newly-paired vehicles need a manual reload.** A vehicle paired in
   Tibber after the integration was set up won't appear until you reload
   it (see [Setup](#setup)).
+- **Removed vehicles need a manual reload too.** If a vehicle is unpaired
+  from your Tibber account (e.g. sold), its device correctly shows as
+  unavailable but isn't automatically deleted from Home Assistant —
+  reload the integration to clean it up.
+- **Polling interval is fixed at 5 minutes, not user-configurable.** There
+  is no options flow to change it, and Home Assistant's generic
+  per-entity "enable polling" system option has no effect here — this
+  integration polls via a `DataUpdateCoordinator` on its own schedule,
+  independent of that per-entity setting.
 - **Data freshness depends on Tibber, not just this integration.** Tibber
   itself polls the vehicle manufacturer's backend on its own schedule
   (undocumented); this integration's own 5-minute polling can't return
@@ -211,8 +236,10 @@ See [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) for the dev/test workflow
 to the real instance) and [`CONTRIBUTING.md`](CONTRIBUTING.md) if you want
 to contribute.
 
-Background on why this project exists and how it relates to sibling
-projects is in [`docs/CONTEXT.md`](docs/CONTEXT.md).
+Background on why this project exists — the VW backend block, why Tibber
+is a sanctioned alternative, and why this is a standalone integration
+rather than built on an existing library — is in
+[`docs/CONTEXT.md`](docs/CONTEXT.md).
 
 ## License
 
@@ -230,3 +257,6 @@ MIT — see [`LICENSE`][license].
 [tibber-data-api]: https://data-api.tibber.com
 [tibber-clients]: https://data-api.tibber.com/clients/manage/
 [volkswagencarnet]: https://github.com/robinostlund/homeassistant-volkswagencarnet
+[decisions-redirect-uri]: docs/DECISIONS.md#the-registered-redirect_uri-is-always-httpsmyhome-assistantioredirectoauth--works-fine-for-a-lan-only-instance
+[decisions-entities]: docs/DECISIONS.md#entity-identity-matched-to-homeassistant-volkswagencarnet-not-invented-fresh
+[decisions-polling]: docs/DECISIONS.md#dataupdatecoordinator-for-polling-refresh-token-only-at-runtime

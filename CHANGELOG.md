@@ -24,6 +24,16 @@ that level of detail instead of writing it out here.
   (separate Installation/Setup sections, a per-entity reference section,
   a Known Issues/Limitations section, reference-style links) — no
   functional change, documentation only.
+- `README.md` documentation pass from a full end-user review: corrected
+  the listed minimum Home Assistant version (was still 2024.1.0, out of
+  sync with the actual 2024.4.0 requirement fixed below); moved the
+  "read-only" note up to the introduction instead of only appearing in
+  Known Issues; added notes on multi-Tibber-account support, that the
+  polling interval isn't user-configurable, that a removed vehicle's
+  device needs a manual reload to clean up, and that only a Volkswagen
+  vehicle has been verified end-to-end so far; and fixed several
+  `docs/DECISIONS.md` links that pointed at the top of that file instead
+  of the relevant section.
 
 ### Fixed
 - If the OAuth2 login session became unusable in a specific way (no
