@@ -83,7 +83,7 @@ easy win left on the table) rather than noting it silently and moving on.**
 | `appropriate-polling` | Reasonable polling interval | ✅ 5 min (`DEFAULT_UPDATE_INTERVAL_SECONDS`); no documented Tibber-side cadence to tune against, see `docs/DECISIONS.md` |
 | `brands` | Branding assets available | ✅ local `custom_components/tibber_vehicle/brand/` |
 | `common-modules` | No duplicated logic across modules | ✅ |
-| `config-flow-test-coverage` | Full test coverage for the config flow | ❌ **zero test files exist yet** — `tests/` only has fixture scaffolding. `docs/TESTING.md` (2026-08-24) is the concept/plan for closing this; still needs the actual test files written. Biggest open gap. |
+| `config-flow-test-coverage` | Full test coverage for the config flow | 🟡 `tests/test_config_flow.py` (2026-08-24) covers all 6 planned config-flow cases, all passing, running in CI. `tests/test_api.py`/`test_init.py`/`test_sensor.py` from `docs/TESTING.md`'s plan still not written — those cover other modules, not the config flow itself, so this specific rule is arguably ✅ now; keeping it 🟡 until the rest of the plan lands too. |
 | `config-flow` | Set up via UI, correct `ConfigEntry` data/options use | ✅ |
 | `dependency-transparency` | External deps documented | ✅ — none beyond aiohttp (bundled with HA) |
 | `docs-actions`/`docs-triggers`/`docs-conditions` | Document provided actions/triggers/conditions | N/A — none provided |
@@ -94,8 +94,8 @@ easy win left on the table) rather than noting it silently and moving on.**
 | `entity-unique-id` | Entities have a unique ID | ✅ |
 | `has-entity-name` | `_attr_has_entity_name = True` | ✅ (`entity.py`) |
 | `runtime-data` | Use `ConfigEntry.runtime_data` | ✅ |
-| `test-before-configure` | Validate connectivity before finishing setup | ✅ logically (the vehicle-list call in `async_oauth_create_entry` aborts on failure) — but untested, see `config-flow-test-coverage` |
-| `test-before-setup` | Verify init works before completing setup | ✅ logically (`async_config_entry_first_refresh` raises `ConfigEntryNotReady` on failure) — same test-coverage caveat |
+| `test-before-configure` | Validate connectivity before finishing setup | ✅ the vehicle-list call in `async_oauth_create_entry` aborts on failure, now covered by `test_abort_connection_error`/`test_abort_no_vehicle_found` in `tests/test_config_flow.py` |
+| `test-before-setup` | Verify init works before completing setup | ✅ logically (`async_config_entry_first_refresh` raises `ConfigEntryNotReady` on failure) — still untested; that's `tests/test_init.py` in `docs/TESTING.md`'s plan, not yet written |
 | `unique-config-entry` | Can't set up the same account twice | ✅ `_abort_if_unique_id_configured()` keyed on home ids |
 
 ### Silver / Gold (aspirational — not required for v1.0.0, but worth knowing what's deliberately deferred)
