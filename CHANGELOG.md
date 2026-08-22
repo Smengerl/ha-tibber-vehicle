@@ -8,6 +8,14 @@ that level of detail instead of writing it out here.
 
 ## [Unreleased]
 
+### Fixed
+- `entity.py`'s device info defaulted `manufacturer` to `"Volkswagen"`
+  whenever Tibber's `info.brand` field was missing, contradicting the
+  README's "for any vehicle ... regardless of make" — a non-VW vehicle
+  with an empty `brand` field would have shown up mislabeled. Removed the
+  fallback; manufacturer is now simply omitted when Tibber doesn't report
+  one, instead of guessed.
+
 ### Added
 - Local brand assets (`custom_components/tibber_vehicle/brand/icon.png`,
   `icon@2x.png`) so the integration shows a proper icon instead of a

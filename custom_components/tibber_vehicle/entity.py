@@ -29,7 +29,7 @@ class TibberVehicleEntity(CoordinatorEntity[TibberVehicleCoordinator]):
         info = coordinator.data.get("info", {})
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, coordinator.config_entry.unique_id)},
-            manufacturer=info.get("brand") or "Volkswagen",
+            manufacturer=info.get("brand"),
             model=info.get("model"),
             name=info.get("name") or coordinator.config_entry.title,
         )
