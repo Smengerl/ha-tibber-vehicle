@@ -437,3 +437,31 @@ code path exists even if unreachable here), but don't assume
 `missing_configuration` is the one you'll see without checking against a
 real run first — this is exactly the kind of assumption
 `docs/TESTING.md` exists to catch.
+
+## Real bug found while writing `tests/test_init.py`: wrong exception type caught
+
+2026-08-24: `__init__.py`'s `async_setup_entry` caught
+`ImplementationUnavailableError` around `async_get_config_entry_implementation`
+- modeled on Spotify's `__init__.py` as read from HA core's `master` branch
+during the original implementation pass. Writing
+`test_setup_entry_oauth_implementation_unavailable` (no Application
+Credential registered at all) surfaced that this never actually fires: in
+the HA version this project depends on (2026.2.3, confirmed by reading
+`async_get_config_entry_implementation`'s source directly), that function
+raises a plain `ValueError("Implementation not available")` when no
+implementation is registered - `ImplementationUnavailableError` isn't
+raised by this code path in that version at all, only in some
+newer/dev-branch HA code this integration happened to be modeled on.
+
+Effect before the fix: instead of gracefully entering
+`ConfigEntryNotReady`/retry state, the `ValueError` propagated unhandled,
+landing the entry in `ConfigEntryState.SETUP_ERROR` (a harder failure that
+doesn't auto-retry) - confirmed by the test actually failing with exactly
+that state before the fix, not by inspection alone. Fixed by catching
+`(ValueError, ImplementationUnavailableError)` together, so this stays
+correct whether an installation is on the "old" `ValueError`-raising
+behavior or a future HA version that's switched to the newer exception
+type. This is the second real, previously-undetected bug this test-writing
+pass has surfaced (the first was `missing_credentials` vs
+`missing_configuration`, above) - concrete evidence for why
+`docs/TESTING.md` exists, not just a checklist to satisfy.

@@ -19,3 +19,10 @@ that level of detail instead of writing it out here.
   (separate Installation/Setup sections, a per-entity reference section,
   a Known Issues/Limitations section, reference-style links) — no
   functional change, documentation only.
+
+### Fixed
+- If the OAuth2 login session became unusable in a specific way (no
+  implementation registered for the stored credential), the integration
+  could land in a stuck error state on startup instead of automatically
+  retrying. Fixed by catching the actual exception type Home Assistant
+  raises for this.

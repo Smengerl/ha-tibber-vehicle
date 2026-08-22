@@ -93,52 +93,68 @@ one-line project config). Also worth knowing going forward: don't
 hand-assert exact HA abort-reason strings in a test plan without actually
 running it once — see finding 1 above.
 
-### `tests/test_api.py` — the retry/backoff/dedup logic added during the pre-1.0.0 review
+### `tests/test_api.py` — ✅ done (2026-08-24), all 5 passing
 
 7. `test_get_homes_and_devices_happy_path`.
 8. `test_async_get_all_vehicles_dedups_across_homes` — same vehicle
    returned under two homes → appears once.
-9. `test_retries_on_429_then_succeeds` — first response 429, second 200;
-   patch `asyncio.sleep` to keep the test fast, assert it was called.
-10. `test_no_retry_on_401` — fails immediately, `_session.get` called
-    exactly once.
+9. `test_retries_on_429_then_succeeds` — first response 429, second 200,
+   via `AiohttpClientMockResponse`'s `side_effect` (a stateful closure) -
+   `aioclient_mock` always returns the *first* registered match for a URL,
+   so two static registrations for the same URL don't give "first call
+   gets response A, second gets B" the way you might expect; `side_effect`
+   is the actual mechanism for that.
+10. `test_no_retry_on_401` — fails immediately, exactly 1 call recorded in
+    `aioclient_mock.mock_calls`.
 11. `test_exhausts_retries_on_persistent_5xx` — all attempts 503 → raises
-    `TibberVehicleApiError` after `MAX_RETRIES`.
+    `TibberVehicleApiError` after `MAX_RETRIES + 1` total calls.
 
-### `tests/test_init.py`
+### `tests/test_init.py` — ✅ done (2026-08-24), all 4 passing
 
 12. `test_setup_entry_success` — coordinator populates, `entry.runtime_data`
     set, sensor platform forwarded.
 13. `test_setup_entry_oauth_implementation_unavailable` →
-    `ConfigEntryNotReady`.
-14. `test_setup_entry_token_refresh_fails` (`aiohttp.ClientError` from
-    `async_ensure_token_valid`) → `ConfigEntryNotReady`.
+    `ConfigEntryNotReady`/retry. **Found a real bug**, not just missing
+    coverage: `__init__.py` caught `ImplementationUnavailableError`, but
+    the installed HA version (2026.2.3) actually raises a plain
+    `ValueError` here — the `except` clause never fired, so this scenario
+    landed the entry in the harder `SETUP_ERROR` state instead of
+    `SETUP_RETRY`. Fixed by catching both; see `docs/DECISIONS.md`.
+14. `test_setup_entry_token_refresh_fails` — needs an *already-expired*
+    `expires_at` in the mock entry's token, otherwise
+    `async_ensure_token_valid()` short-circuits without attempting a
+    refresh at all and the failure path never triggers.
 15. `test_unload_entry`.
 
-### `tests/test_sensor.py`
+### `tests/test_sensor.py` — ✅ done (2026-08-24), all 4 passing
 
 16. `test_sensors_created_per_vehicle` — two vehicles → 10 entities (5
-    each), correct `unique_id`s and device grouping (two distinct
-    devices).
+    each, all unique `unique_id`s), grouped under 2 distinct devices in
+    the device registry.
 17. `test_sensor_native_value_mapping` — one assertion per capability id,
-    including the `range.remaining` meters→km conversion.
-18. `test_sensor_missing_capability_returns_none`.
+    including the `range.remaining` meters→km conversion (356000 → "356").
+18. `test_sensor_missing_capability_returns_none` — asserts HA's own
+    `"unknown"` state string, since a `None` `native_value` isn't a
+    distinct sentinel in the state machine.
 19. `test_device_info_manufacturer_omitted_when_brand_missing` —
     regression test for the hardcoded-`"Volkswagen"`-fallback bug fixed
     2026-08-24; asserts `manufacturer is None` when `info.brand` is
     absent, not a guessed value.
 
-## Priority order
+## Status: all 19 planned cases implemented and passing (2026-08-24)
 
-1. **`test_config_flow.py` first** — it's the actual Bronze checklist
-   item, and it exercises the OAuth2 dance + multi-vehicle account
-   resolution together, the highest-risk path in the whole integration.
-2. **`test_api.py` next** — the retry/backoff/dedup logic is new (this
-   review cycle) and has no coverage proving it actually works as
-   designed, as opposed to just "looks right on inspection".
-3. **`test_init.py` and `test_sensor.py`** — round out coverage once the
-   above two are in place; lower risk since they're thinner glue code
-   over already-tested pieces.
+19/19 tests across all 4 files pass, both individually and in the same run
+(`pytest tests/`), and in CI (`.github/workflows/validate.yml`'s `pytest`
+job, added alongside this work). Two real, previously-undetected bugs were
+found and fixed purely by writing these tests (the `missing_credentials`
+finding in `test_config_flow.py`, and the `ImplementationUnavailableError`
+vs `ValueError` finding in `test_init.py`) — concrete validation that this
+was worth doing beyond satisfying the Bronze checklist item on paper.
+
+Priority order used (kept for reference): `test_config_flow.py` first (the
+actual Bronze checklist item, exercises the highest-risk path), then
+`test_api.py` (new retry/backoff/dedup logic with no prior coverage), then
+`test_init.py`/`test_sensor.py` (thinner glue code, lower risk).
 
 ## Explicitly out of scope for this pass
 

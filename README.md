@@ -19,10 +19,7 @@ exactly the five values Tibber's API makes available for vehicles —
 nothing more (no doors, climate, position, or lock control; see
 [Known Issues / Limitations](#known-issues--limitations)).
 
-![Tibber Vehicle device with its entities in Home Assistant](docs/images/screenshot.svg)
-
-_Placeholder illustration — will be replaced with a real screenshot once
-more installs have confirmed this works across different vehicles._
+![Tibber Vehicle device with its entities in Home Assistant](docs/images/screenshot.png)
 
 ## Prerequisites
 
@@ -86,7 +83,7 @@ purely local to Home Assistant (only shown back to you if you ever add a
 second Tibber credential and need to tell them apart) — never sent to
 Tibber. Something like `Tibber Vehicle` is a fine choice.
 
-This has to happen *after* installation, not before — the integration
+This has to happen _after_ installation, not before — the integration
 dropdown here only lists domains HA currently has installed and loaded, so
 "Tibber Vehicle" isn't selectable until the HACS/manual install (+
 restart) has completed.
@@ -105,14 +102,14 @@ browser.
 1. You'll be redirected back to Home Assistant, which adds **every vehicle
    currently paired to that Tibber account** at once — each as its own
    device, no picker step, no need to repeat the login per vehicle. A
-   vehicle paired in Tibber *after* this step won't appear until you
+   vehicle paired in Tibber _after_ this step won't appear until you
    reload the integration (Settings → Devices & Services → Tibber Vehicle
    → ⋮ → Reload).
 
 ## Entities
 
 One Home Assistant device per paired vehicle, with 5 entities each — the
-*complete* data surface the Tibber Data API offers for vehicles, confirmed
+_complete_ data surface the Tibber Data API offers for vehicles, confirmed
 by direct inspection of its OpenAPI schema. Names, icons, units, and
 device classes are matched to the equivalent entity in
 [`robinostlund/homeassistant-volkswagencarnet`][volkswagencarnet] wherever

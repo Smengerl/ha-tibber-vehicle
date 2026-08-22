@@ -1,0 +1,18 @@
+{
+  "id": "ZGV2aWNlLTE",
+  "externalId": "WVWZZZAAZLD000001",
+  "info": { "name": "ID.7", "brand": "Volkswagen", "model": "ID.7" },
+  "supportedHistory": { "resolutions": [] },
+  "status": { "lastSeen": "2026-08-21T10:00:00Z" },
+  "attributes": [
+    { "id": "vinNumber", "value": "WVWZZZAAZLD000001" },
+    { "id": "isOnline", "value": true }
+  ],
+  "capabilities": [
+    { "id": "storage.stateOfCharge", "description": "state of charge", "value": 74, "unit": "%" },
+    { "id": "storage.targetStateOfCharge", "description": "target state of charge", "value": 80, "unit": "%" },
+    { "id": "range.remaining", "description": "estimated remaining driving range", "value": 356000, "unit": "m" },
+    { "id": "connector.status", "description": "vehicle plug status", "value": "disconnected", "availableValues": ["connected", "disconnected", "unknown"] },
+    { "id": "charging.status", "description": "vehicle charging status", "value": "idle", "availableValues": ["charging", "idle", "unknown"] }
+  ]
+}

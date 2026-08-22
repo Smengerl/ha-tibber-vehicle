@@ -31,7 +31,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: TibberVehicleConfigEntry
     """Set up Tibber Vehicle from a config entry."""
     try:
         implementation = await async_get_config_entry_implementation(hass, entry)
-    except ImplementationUnavailableError as err:
+    except (ValueError, ImplementationUnavailableError) as err:
+        # ValueError is what this actually raises as of HA 2026.2.3 when no
+        # implementation is registered for entry.data["auth_implementation"]
+        # (confirmed by reading async_get_config_entry_implementation's
+        # source directly - it never raises ImplementationUnavailableError
+        # in this version, unlike some newer/dev HA code this integration
+        # was originally modeled on). Catching both keeps this correct
+        # across HA versions instead of assuming either one.
         raise ConfigEntryNotReady("OAuth2 implementation unavailable") from err
 
     session = OAuth2Session(hass, entry, implementation)
