@@ -2,7 +2,7 @@
 
 ## 1. Fast local iteration — disposable Dockerized HA instance
 
-Don't touch the real Home Assistant Green for day-to-day development. Run a
+Don't touch the real Home Assistant instance for day-to-day development. Run a
 throwaway instance locally with this repo's integration bind-mounted in:
 
 ```bash
@@ -36,13 +36,14 @@ figuring that out from scratch each time.
 
 ## 3. Releasing a change to the real Home Assistant instance
 
-The real instance is a **Home Assistant Green** (HAOS appliance) — no direct
-root filesystem access. Never edit its `custom_components/` over Samba/SSH
-as the primary workflow (see `docs/DECISIONS.md` for why).
+The real instance is a HAOS appliance — no direct root filesystem access.
+Never edit its `custom_components/` over a network file share as the
+primary workflow (see `docs/DECISIONS.md` for why).
 
 For the one-time first-install walkthrough (registering the Tibber OAuth2
 client, HACS custom repository, Application Credentials, adding the
-integration) see [`README.md`](../README.md)'s "Installation & setup" —
+integration) see [`README.md`](../README.md)'s "Installation" and "Setup"
+sections —
 that's the file HACS actually shows a user, so any step someone needs to
 follow to get this running belongs there, not here. This section is only
 about getting a *code change* from a local commit onto an instance that

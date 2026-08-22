@@ -52,8 +52,7 @@ logic for free, instead of assuming it away.
 ## Fixture data
 
 New `tests/fixtures/` directory, JSON files matching the *confirmed live*
-response shapes from `docs/CONTEXT.md` §3 / `weconnect_mvp`'s
-`TIBBER_API.md` — not invented shapes:
+response shapes documented in `docs/CONTEXT.md` §3 — not invented shapes:
 
 - `homes.json` — `{"homes": [{"id": "home-1"}]}`
 - `devices_one_vehicle.json` / `devices_two_vehicles.json` —
@@ -67,22 +66,32 @@ one source of truth per shape, no copy-pasted inline dicts drifting apart.
 
 ## Test files and cases
 
-### `tests/test_config_flow.py` — the Bronze-blocking priority
+### `tests/test_config_flow.py` — the Bronze-blocking priority — ✅ done (2026-08-24), all 6 passing
 
 1. `test_abort_if_no_credentials` — no Application Credential registered →
-   abort (`missing_configuration`/`missing_credentials`).
+   abort. **Turned out to be `missing_credentials`, not
+   `missing_configuration`** as originally assumed here — see
+   `docs/DECISIONS.md`'s "First `tests/test_config_flow.py` run" entry for
+   why, found by actually running this test.
 2. `test_full_flow_single_vehicle` — one home, one vehicle →
    `CREATE_ENTRY`; `unique_id` is the home-id set; title is the vehicle's
    name.
 3. `test_full_flow_multiple_vehicles` — two vehicles under the account →
-   `CREATE_ENTRY`; title lists both names (covers the `> 3` → `"N
-   vehicles"` fallback in a second case).
+   `CREATE_ENTRY`; title lists both names.
 4. `test_abort_no_vehicle_found` — homes exist, devices list empty →
    abort `no_vehicle_found`.
 5. `test_abort_connection_error` — Tibber API call fails (500) during
    resolution → abort `connection_error`.
 6. `test_abort_if_account_already_configured` — linking the same
    home-id set twice → abort `already_configured`.
+
+Needed one addition beyond what this plan anticipated: a root
+`pyproject.toml` with `[tool.pytest.ini_options]` `asyncio_mode = "auto"`
+— without it, `pytest-asyncio` defaults to strict mode and every async
+test errors out before even running (not a test-logic problem, a missing
+one-line project config). Also worth knowing going forward: don't
+hand-assert exact HA abort-reason strings in a test plan without actually
+running it once — see finding 1 above.
 
 ### `tests/test_api.py` — the retry/backoff/dedup logic added during the pre-1.0.0 review
 

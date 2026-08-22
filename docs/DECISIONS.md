@@ -22,9 +22,9 @@ integration doesn't need to be touched or removed.
 
 ## OAuth2 via Home Assistant's built-in helper, not a custom loopback server
 
-`weconnect_mvp`'s `tibber_client.py` proof-of-concept implements its own
-local loopback HTTP server to catch the OAuth2 redirect — appropriate for a
-standalone script, wrong fit for a HA integration. Home Assistant ships
+An earlier standalone-script prototype of this OAuth2 flow implemented its
+own local loopback HTTP server to catch the redirect — appropriate for a
+plain script, wrong fit for a HA integration. Home Assistant ships
 `homeassistant.helpers.config_entry_oauth2_flow` specifically for this
 pattern (Authorization Code flow with browser redirect back into HA,
 integrates with `my.home-assistant.io` for instances without a public URL,
@@ -57,8 +57,8 @@ Concretely this means:
 
 Confirmed 2026-08-21 by reading `homeassistant/helpers/config_entry_oauth2_flow.py`
 in HA core directly (`async_get_redirect_uri`): as long as the `my`
-component is loaded — the default, part of `default_config`, true for
-Simon's real instance — HA always uses the constant
+component is loaded — the default, part of `default_config` — HA always
+uses the constant
 `MY_AUTH_CALLBACK_PATH = "https://my.home-assistant.io/redirect/oauth"` as
 the redirect_uri sent to the OAuth provider, **regardless of whether the HA
 instance has any public URL configured.** This is the one value to register
@@ -66,9 +66,9 @@ as the redirect URI when creating the OAuth2 client at
 `data-api.tibber.com/clients/manage/` — not the instance's local address
 (e.g. `http://homeassistant.local:8123`).
 
-This works for a purely LAN-only instance (confirmed relevant here: the
-real HA instance has no public/external URL, only
-`http://homeassistant.local:8123`) because the final hop back to the local
+This works for a purely LAN-only instance — e.g. one reachable only at
+`http://homeassistant.local:8123`, with no public/external URL configured
+— because the final hop back to the local
 instance is a **client-side-only browser redirect**, not a server-to-server
 call: `my.home-assistant.io/redirect/oauth` is a static page that reads
 which HA instance URL the browser last used (stored client-side) and
@@ -118,8 +118,8 @@ new_token})` under the hood, so a refreshed token silently replaces the old
 one in the same place.
 
 Practical implication for `config_flow.py`/`__init__.py`: no custom
-token-storage code is needed or should be written — don't reimplement
-anything resembling `tibber_client.py`'s `TokenStore` here.
+token-storage code is needed or should be written — don't reimplement a
+custom token store here.
 `async_oauth_create_entry` is now implemented this way (see "Login flow
 implementation" below).
 
@@ -147,9 +147,9 @@ and the modern `entry.runtime_data` pattern (a typed
   earlier single-vehicle design.
 - **`api.py`** (new): a thin `TibberVehicleApiClient` wrapping the three
   `GET` endpoints this integration needs. Response envelope shapes
-  (`{"homes": [...]}`, `{"devices": [...]}`) are taken directly from
-  `tibber_client.py`'s already-live-tested `homes()`/`devices()` methods,
-  not re-guessed. Auth is injected via an `access_token_provider` async
+  (`{"homes": [...]}`, `{"devices": [...]}`) were confirmed directly
+  against the live API, not guessed. Auth is injected via an
+  `access_token_provider` async
   callback rather than the client holding a token itself — mirrors how
   `spotifyaio.SpotifyClient.refresh_token_function` keeps API access and
   token refresh as separate concerns.
@@ -221,8 +221,8 @@ Notes on the places this isn't a blind 1:1 copy:
   Connect's `binary_sensor`.** A first pass (same day) did match VW
   Connect's actual entity type here too — `TibberVehicleBinarySensor`
   mapping `connected`/`disconnected` to `True`/`False` and `"unknown"` to
-  `is_on` returning `None` (HA's unavailable/unknown state). Simon then
-  asked to revert this one back to a string sensor — the binary_sensor
+  `is_on` returning `None` (HA's unavailable/unknown state). This was then
+  reverted back to a string sensor — the binary_sensor
   *type* being technically valid wasn't the issue, but the tri-state
   Tibber value collapsing "unknown" into a generic unavailable state
   (rather than staying visibly distinct from `disconnected`) apparently
@@ -235,8 +235,8 @@ Notes on the places this isn't a blind 1:1 copy:
   plug-related entities (e.g. `mdi:ev-plug-type1` for "Charger type").
 
 **Verification:** every module import-checked against a real
-`homeassistant` pip install (Python 3.14, matching `weconnect_mvp`'s own
-venv) — confirms import paths, class/attribute names, and the PEP 695
+`homeassistant` pip install (Python 3.14) — confirms import paths,
+class/attribute names, and the PEP 695
 `type` alias syntax are all correct. **2026-08-23: confirmed working
 end-to-end on the real Home Assistant instance** — full OAuth2 login
 against Tibber, vehicle resolution, and all five entities populating
@@ -267,10 +267,10 @@ v1:**
 
 2026-08-24, superseding the "first vehicle wins" limitation above (kept
 there with a strikethrough-equivalent note rather than deleted, per this
-repo's append-don't-overwrite convention): Simon asked why the integration
-couldn't simply add every vehicle paired to the Tibber account at once,
-instead of requiring a picker step or one login per vehicle. That's a
-better fit for how the underlying API actually works — `async_get_homes`
+repo's append-don't-overwrite convention): the integration was changed to
+add every vehicle paired to the Tibber account at once, instead of
+requiring a picker step or one login per vehicle. That's a better fit for
+how the underlying API actually works — `async_get_homes`
 and `async_get_all_vehicles` already return *everything* the account can
 see in one shot, so making the user choose a subset (or repeat the OAuth
 dance once per vehicle) would be added friction for no real benefit.
@@ -316,18 +316,17 @@ Standard HA pattern: one `DataUpdateCoordinator` per config entry, re-listing
 every vehicle on the account and polling `GET
 /v1/homes/{homeId}/devices/{deviceId}` for each on an interval (`const.
 DEFAULT_UPDATE_INTERVAL_SECONDS = 300`, i.e. 5 minutes) using only
-non-interactive refresh-token exchange. This mirrors the separation
-`tibber_client.py`'s `TokenStore` already has between one-time interactive
-login and ongoing refresh — HA's OAuth2 session helper
+non-interactive refresh-token exchange. This mirrors the standard
+separation between one-time interactive login and ongoing refresh — HA's
+OAuth2 session helper
 (`OAuth2Session`) gives this for free once the Application Credential /
 config flow above is wired up.
 
 **Polling is confirmed the only option, not just the convenient default.**
 2026-08-22: downloaded and searched the full Tibber Data API OpenAPI spec
-(`https://data-api.tibber.com/openapi/v1.json`) after Simon observed the
-visible update cadence looking closer to ~10 minutes than the configured
-5. Two findings, now recorded in `weconnect_mvp`'s `TIBBER_API.md` session
-log as the durable source (not duplicated in full here):
+(`https://data-api.tibber.com/openapi/v1.json`) after the visible update
+cadence was observed to look closer to ~10 minutes than the configured 5.
+Two findings from directly inspecting the spec:
 - The API's only push/SSE mechanism (`GET /homes/{homeId}/live-events`)
   is scoped to metering hardware only (Pulse CT clamps / Bridge-attached
   Pulses) per `GET .../live-events/devices`'s own description — vehicles
@@ -356,9 +355,9 @@ richer feature set is ever wanted, that's a new decision to make later
 ## Dev workflow: local repo → disposable Docker HA → HACS custom repo
 
 Full detail in `docs/DEVELOPMENT.md`. Short version: never develop directly
-against the real Home Assistant Green's mounted filesystem (Samba/SSH
-add-on) — too slow, too risky against a production system with real
-devices. Iterate locally against a throwaway Dockerized HA instance, add
+against a live production Home Assistant instance's mounted filesystem —
+too slow, too risky against a system with real devices. Iterate locally
+against a throwaway Dockerized HA instance, add
 unit tests via `pytest-homeassistant-custom-component`, and only reach the
 real HA instance by pushing to GitHub and installing this repo as a HACS
 custom repository (same install path `volkswagencarnet` already uses there).
@@ -416,3 +415,25 @@ neither. Both fixed:
   timeout value fires — but there's no reason to let a stuck Tibber
   request block up to a full 5-minute poll interval when Tibber's API
   should normally respond in well under a second.
+
+## First `tests/test_config_flow.py` run: `missing_credentials`, not `missing_configuration`
+
+2026-08-24, found by actually running `test_abort_if_no_credentials`
+(written from `docs/TESTING.md`'s plan, which had assumed
+`missing_configuration` without running it first): with no Application
+Credential registered yet, the flow aborts with `missing_credentials`,
+never `missing_configuration`, for this integration specifically.
+Confirmed against `async_step_pick_implementation`'s source
+(`config_entry_oauth2_flow.py`): the `missing_configuration` branch only
+fires when the domain isn't recognized by `async_get_application_credentials`
+at all — but `application_credentials.py` existing makes this domain
+recognized unconditionally, regardless of whether an actual credential has
+been imported yet. So for any integration that ships an
+`application_credentials.py` (as this one does), `missing_configuration`
+is effectively unreachable — only `missing_credentials` can actually fire
+for the "nothing registered yet" case. Both abort reasons stay defined in
+`strings.json`/`translations/en.json` (harmless to keep, and the framework
+code path exists even if unreachable here), but don't assume
+`missing_configuration` is the one you'll see without checking against a
+real run first — this is exactly the kind of assumption
+`docs/TESTING.md` exists to catch.

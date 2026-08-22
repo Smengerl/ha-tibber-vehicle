@@ -1,16 +1,15 @@
 # Context and background
 
 Written 2026-08-21 when this repo was scaffolded, from a Claude Code chat
-session plus the prior research already done in the `weconnect_mvp` project.
+session and prior research into the Tibber Data API.
 This is the durable record of *why* this project exists and what's already
 known — read this before writing any real code here.
 
 ## 1. The chain of events that led here
 
 1. **VW closed direct third-party access to its backend.** `emea.bff.cariad.digital`
-   (the We Connect BFF) stopped accepting third-party app tokens. This is
-   documented in detail in a sibling project, `weconnect_mvp`, at
-   `experiment/vw-device-flow-attestation-bypass/FINDING.md`.
+   (the We Connect BFF) stopped accepting third-party app tokens, confirmed
+   by direct testing.
 2. **This broke the real Home Assistant instance's VW integration
    independently.** The HACS-installed integration on that HA instance —
    [`robinostlund/homeassistant-volkswagencarnet`](https://github.com/robinostlund/homeassistant-volkswagencarnet)
@@ -21,19 +20,16 @@ known — read this before writing any real code here.
    *"Volkswagen has recently changed its authentication and API access
    mechanisms, preventing third-party applications from obtaining the tokens
    required to access vehicle data... there is no feasible workaround."*
-   Two independent codebases (that integration, and `weconnect_mvp`'s own
-   direct-BFF experiment) hit the identical VW-side block.
+   Two independent attempts at direct VW backend access hit the identical
+   block.
 3. **Tibber is a sanctioned alternative.** Tibber is an official VW
    integration partner. A VW vehicle paired inside a user's Tibber account
    is readable through Tibber's own public, documented, OAuth2 **Data API**
    (`data-api.tibber.com`) — a different API from the older Tibber GraphQL
    API (`developer.tibber.com`, prices/consumption/Pulse only, no vehicles).
-   `weconnect_mvp`'s `experiment/tibber-integration/TIBBER_API.md` is the
-   full research record of this API (auth flow, scopes, endpoints, field
-   shapes), confirmed live end-to-end on 2026-08-21. **This repo's OAuth2
-   client should be modeled on that document and on its accompanying
-   `tibber_client.py` proof-of-concept** (same repo), not re-researched from
-   scratch.
+   Its auth flow, scopes, endpoints, and field shapes were fully researched
+   and confirmed live end-to-end on 2026-08-21 — see §3 below for the
+   summary this integration's OAuth2 client is modeled on.
 4. **Under the hood, Tibber's VW support is itself backed by
    [Enode](https://enode.com)**, a third-party EV/energy-device aggregator —
    confirmed by decoding the device `id` returned from Tibber's API (it
@@ -43,41 +39,29 @@ known — read this before writing any real code here.
    reportedly supports write operations — Tibber chose not to expose control
    endpoints publicly.
 
-## 2. This project vs. `weconnect_mvp` — not the same codebase
+## 2. Why this is a standalone integration, not built on an existing library
 
-`weconnect_mvp` is a separate project (an MCP server exposing VW vehicle
-data as tools for LLM agents) that:
+A Python ecosystem exists for talking to VW-group vehicles directly:
+**`carconnectivity`** (Till Steinbach's connector-based library —
+`CarConnectivity-connector-{volkswagen,skoda,volkswagen-na,seatcupra,
+audi,tronity}` + plugins, including an MQTT-based
+`CarConnectivity-plugin-homeassistant`). **No Tibber connector exists in
+that ecosystem** — it talks to each manufacturer's backend directly, which
+is exactly the access path VW closed (§1). Pulling in that whole
+plugin/connector infrastructure for 5 sensor values read from a completely
+different API (Tibber's) would be the wrong shape for this integration.
 
-- Normally talks to VW directly via the **`carconnectivity`** Python
-  library (Till Steinbach's connector-based ecosystem —
-  `CarConnectivity-connector-{volkswagen,skoda,volkswagen-na,seatcupra,
-  audi,tronity}` + plugins). **No Tibber connector exists in that ecosystem.**
-  This is a completely different codebase from `homeassistant-volkswagencarnet`
-  (§1.2) despite both ultimately reading VW vehicle data — don't confuse the
-  two when researching either one.
-- Has already built and **live-tested** a working Tibber OAuth2 client
-  (`experiment/tibber-integration/tibber_client.py`) as a proof-of-concept
-  for a possible `TibberAdapter` inside *its own* `AbstractAdapter`
-  interface — see `TIBBER_API.md` §7 for that architecture analysis. That
-  analysis is MCP-server-specific (Python ABC classes, `Optional[Model]`
-  return contracts) and does not apply directly here, but the underlying
-  **OAuth2 flow, scopes, endpoints, and capability field mapping are
-  identical** and should be reused conceptually.
-
-This repo (`ha-tibber-vehicle`) is a **standalone Home Assistant custom
-integration** — a new `custom_components/tibber_vehicle/` folder, own
-domain, own entities, no code dependency on `weconnect_mvp` or on
-`carconnectivity`. It exists specifically to get Tibber-sourced vehicle data
-into Home Assistant's entity/dashboard/automation system, which
-`weconnect_mvp` (an MCP server for LLM tool use, not a HA integration) does
-not do and isn't meant to do.
+This repo (`ha-tibber-vehicle`) is therefore a **standalone Home Assistant
+custom integration** — a new `custom_components/tibber_vehicle/` folder,
+own domain, own entities, no dependency on `carconnectivity` or on
+`homeassistant-volkswagencarnet` (§1). It exists specifically to get
+Tibber-sourced vehicle data into Home Assistant's entity/dashboard/
+automation system via Tibber's own public Data API.
 
 ## 3. What the Tibber Data API actually offers
 
-Full detail lives in `weconnect_mvp`'s `TIBBER_API.md` (§3–§5) — summary
-here for convenience, **treat that file as the source of truth if the two
-ever disagree**, since it documents live-confirmed behavior, this is just a
-copy taken at scaffold time:
+Confirmed live against the real API (initially 2026-08-21, re-verified
+end-to-end 2026-08-23 — see `docs/DECISIONS.md`):
 
 - **Auth:** OAuth2 Authorization Code flow (PKCE recommended), via
   `thewall.tibber.com`. Access tokens ~1h, refresh tokens ~30 days
@@ -150,8 +134,7 @@ version:
   `homeassistant-volkswagencarnet`, and not a `carconnectivity` connector.
 - Use Home Assistant's built-in
   `homeassistant.helpers.config_entry_oauth2_flow` for the OAuth2 dance
-  instead of reimplementing the loopback-listener approach from
-  `tibber_client.py` — HA has native support for exactly this pattern.
+  instead of a custom loopback-listener approach — HA has native support
+  for exactly this pattern.
 - `DataUpdateCoordinator` doing non-interactive refresh-token polling only,
-  matching how `tibber_client.py`'s `TokenStore` already separates the
-  one-time interactive login from ongoing refresh.
+  keeping the one-time interactive login separate from ongoing refresh.
