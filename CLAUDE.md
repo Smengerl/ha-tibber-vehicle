@@ -109,6 +109,19 @@ config. Don't silently start building toward these — if one comes up
 naturally, mention it and let the user decide whether it's worth doing now
 or staying deferred, same as any other scope decision in this repo.
 
+## Known pitfalls — re-check these when touching related code
+
+Found during actual reviews (`docs/DECISIONS.md` has the full story for
+each) — not covered by the generic Quality Scale checklist above, so
+they'd otherwise only get caught again by chance. Check the matching row
+whenever you touch the trigger, not just when reviewing on request:
+
+| Trigger | What to check | Why |
+|---|---|---|
+| Adding any new Python language feature anywhere in `custom_components/tibber_vehicle/*.py` (new syntax, not just new logic — e.g. another PEP 695 `type` statement, a `match` statement, new stdlib-version-gated API) | Confirm it's available on the Python version Home Assistant actually ships for `hacs.json`'s declared `"homeassistant"` minimum, not just whatever Python this dev environment happens to run. `type` statements already forced `2024.4.0` as the floor (HA didn't require Python 3.12 until that release) — a stricter feature could force it higher again. | `hacs.json` declared `2024.1.0` while the code required Python 3.12 (`2024.4.0`+) — would have crashed with a `SyntaxError` on import for anyone still on an in-range-but-actually-incompatible version. |
+| Adding a new entity platform or a new entity base class (anything that isn't a `TibberVehicleSensor` subclassing `TibberVehicleEntity`) | Make sure it still goes through `TibberVehicleEntity` (or otherwise reimplements its `available` override) — don't inherit `CoordinatorEntity` directly and assume the default `available` is enough. | `CoordinatorEntity`'s default `available` only checks the whole coordinator's `last_update_success`, not whether *this* vehicle's `device_id` is still in `coordinator.data`. A new platform built without going through `TibberVehicleEntity` would silently reintroduce the "removed vehicle stuck at `unknown` forever" bug already fixed once. |
+| Writing a docstring/comment that cites *why* something is true or *where* a fact was confirmed | Cite something a reader of this public repo can actually reach (a section of `docs/*.md` in this repo, an official Tibber/HA doc URL, a specific commit) — never an external private/inaccessible project as the source of record. | `api.py`/`const.py`/`config_flow.py` cited `weconnect_mvp` (a private sibling project on the original maintainer's machine) as where facts were confirmed — a dead-end reference for anyone else reading this code. |
+
 ## Before starting new work in this repo
 
 Read `docs/CONTEXT.md` and `docs/DECISIONS.md` first. If something you're
