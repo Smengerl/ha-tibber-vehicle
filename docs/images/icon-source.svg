@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <rect width="256" height="256" fill="#1ED0E7"/>
+
+  <!-- lightning bolt: hollow silhouette (outline only), like Tibber's - rotated for a steeper lean -->
+  <g transform="rotate(22 70 125)">
+    <polygon points="76,30 20,144 70,144 64,220 120,106 70,106"
+             fill="none" stroke="#111111" stroke-width="9"
+             stroke-linejoin="round" stroke-linecap="round"/>
+  </g>
+
+  <!-- vehicle, side profile, same thin outline style -->
+  <g stroke="#111111" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M132 180
+             L137 150
+             C140 137 151 128 165 128
+             L200 128
+             C212 128 222 136 227 149
+             L233 170
+             L233 180"/>
+    <path d="M132 180 L233 180"/>
+  </g>
+  <circle cx="155" cy="182" r="12" fill="#111111"/>
+  <circle cx="212" cy="182" r="12" fill="#111111"/>
+</svg>

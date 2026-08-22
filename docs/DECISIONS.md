@@ -311,3 +311,33 @@ devices. Iterate locally against a throwaway Dockerized HA instance, add
 unit tests via `pytest-homeassistant-custom-component`, and only reach the
 real HA instance by pushing to GitHub and installing this repo as a HACS
 custom repository (same install path `volkswagencarnet` already uses there).
+
+## Brand assets: local `brand/` directory now, central `home-assistant/brands` PR later
+
+2026-08-23: HACS's `hacs/action` (required to pass before a `hacs/default`
+submission is even considered) checks for brand assets two ways — first a
+local `custom_components/tibber_vehicle/brand/icon.png` in this repo
+(a Home Assistant 2026.3+ feature, served via the local `/api/brands/...`
+proxy and taking priority over the CDN when present), falling back to the
+domain being listed in the central `home-assistant/brands` repo if not.
+Went with local-only for now: it's entirely within this repo (no
+third-party review/merge dependency), satisfies the automated check
+immediately, and is what actually determines HACS-default eligibility.
+
+Known gap, deliberately deferred: users on HA older than 2026.3 won't see
+an icon at all until this integration is also submitted to
+`home-assistant/brands` (that PR needs review/merge from that repo's own
+maintainers, unlike the local path). Given `hacs.json` currently declares
+`"homeassistant": "2024.1.0"` as the minimum supported version, that gap is
+real, not hypothetical — revisit once the integration has enough real
+users on pre-2026.3 HA for it to matter, or just before a `hacs/default`
+submission (worth doing at that point regardless, since it's the more
+future-proof path and the local assets can be reused directly as the PR's
+content).
+
+Icon design: teal background matches Tibber's own icon (`#1ED0E7`,
+sampled directly from `home-assistant/brands`' `core_integrations/tibber/icon.png`,
+not eyeballed) with a hollow-outline lightning bolt in the same
+line-drawing style, paired with a stylized vehicle silhouette in matching
+stroke weight — visually ties this integration to Tibber (its actual data
+source) while the vehicle glyph signals what it's specifically for.

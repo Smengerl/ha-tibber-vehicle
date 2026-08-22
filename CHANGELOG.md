@@ -9,6 +9,14 @@ that level of detail instead of writing it out here.
 ## [Unreleased]
 
 ### Added
+- Local brand assets (`custom_components/tibber_vehicle/brand/icon.png`,
+  `icon@2x.png`) so the integration shows a proper icon instead of a
+  generic placeholder, in Home Assistant's UI (2026.3+) and in the HACS
+  default-listing validation (`hacs/action`'s brands check). Same teal as
+  Tibber's own icon, with an outlined lightning bolt (Tibber's style) next
+  to a stylized vehicle silhouette. Submitting to the central
+  `home-assistant/brands` repo (needed for older HA versions to see an
+  icon at all) is deferred — see `docs/DECISIONS.md`.
 - "Active Installations" badge in `README.md`, sourced live from Home
   Assistant's own opt-in analytics
   (`analytics.home-assistant.io/custom_integrations.json`) via shields.io's
