@@ -30,6 +30,10 @@ HA core instance in-process, no Docker needed. This is the fastest feedback
 loop for coordinator/config-flow/OAuth-refresh logic; prefer it over the
 Docker loop where a real UI interaction isn't what's being tested.
 
+See [`docs/TESTING.md`](TESTING.md) for the actual test concept — which
+files to add, what each should cover, and in what order — rather than
+figuring that out from scratch each time.
+
 ## 3. Releasing a change to the real Home Assistant instance
 
 The real instance is a **Home Assistant Green** (HAOS appliance) — no direct

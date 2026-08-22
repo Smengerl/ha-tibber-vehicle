@@ -20,6 +20,7 @@ cleanup:**
 | `docs/CONTEXT.md` | New facts emerge about the Tibber Data API, the VW backend block, `homeassistant-volkswagencarnet`'s status, or how this project relates to `weconnect_mvp` — anything in the "why"/background category. |
 | `docs/DECISIONS.md` | A new design/architecture decision is made, or an existing one is revisited/reversed. |
 | `docs/DEVELOPMENT.md` | The *developer-facing* workflow changes — local dev loop, testing, CI, versioning mechanics, or how a developer ships a change to the real instance. Never end-user setup steps (see `README.md` row above) — this file is not shown anywhere in Home Assistant's UI. |
+| `docs/TESTING.md` | The test strategy/structure changes, a new test file or fixture shape is added, or a planned test case gets written (or deliberately dropped) — keep the case list matched to what actually exists in `tests/`. |
 | `CONTRIBUTING.md` | The contribution process itself changes (branching/commit conventions, how issues should be reported). |
 | `CHANGELOG.md` | Any notable code or behavior change — add an entry under `[Unreleased]` immediately, don't batch it up right before a release. Written for someone using the integration, not a commit-by-commit developer log. |
 
@@ -83,7 +84,7 @@ easy win left on the table) rather than noting it silently and moving on.**
 | `appropriate-polling` | Reasonable polling interval | ✅ 5 min (`DEFAULT_UPDATE_INTERVAL_SECONDS`); no documented Tibber-side cadence to tune against, see `docs/DECISIONS.md` |
 | `brands` | Branding assets available | ✅ local `custom_components/tibber_vehicle/brand/` |
 | `common-modules` | No duplicated logic across modules | ✅ |
-| `config-flow-test-coverage` | Full test coverage for the config flow | ❌ **zero test files exist** — `tests/` only has fixture scaffolding, no actual tests. Biggest open gap. |
+| `config-flow-test-coverage` | Full test coverage for the config flow | ❌ **zero test files exist yet** — `tests/` only has fixture scaffolding. `docs/TESTING.md` (2026-08-24) is the concept/plan for closing this; still needs the actual test files written. Biggest open gap. |
 | `config-flow` | Set up via UI, correct `ConfigEntry` data/options use | ✅ |
 | `dependency-transparency` | External deps documented | ✅ — none beyond aiohttp (bundled with HA) |
 | `docs-actions`/`docs-triggers`/`docs-conditions` | Document provided actions/triggers/conditions | N/A — none provided |
