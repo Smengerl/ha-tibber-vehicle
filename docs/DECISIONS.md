@@ -465,3 +465,41 @@ type. This is the second real, previously-undetected bug this test-writing
 pass has surfaced (the first was `missing_credentials` vs
 `missing_configuration`, above) - concrete evidence for why
 `docs/TESTING.md` exists, not just a checklist to satisfy.
+
+## Second full project review (2026-08-24): declared min HA version incompatible with the code, and a stale-device availability gap
+
+Two more real, previously-undetected issues found by re-reviewing the
+whole project after the test suite landed:
+
+**`hacs.json` declared `"homeassistant": "2024.1.0"` while the code
+requires Python 3.12+.** `coordinator.py` uses the PEP 695 `type` alias
+statement (`type TibberVehicleConfigEntry = ConfigEntry[...]`), a
+Python-3.12-only syntax feature. Home Assistant didn't require Python 3.12
+until the **2024.4** release (2024.1-2024.3 ran on Python 3.11) - so
+installing on any HA version this integration claimed to support in that
+2024.1-2024.3 range would have failed with a `SyntaxError` on import, not
+a graceful error. Fixed by correcting the declared minimum to `2024.4.0` -
+metadata-only fix, no code change, since the `type` statement itself is
+worth keeping (matches how this project's Spotify-modeled code is written
+elsewhere, and real installs on HA this old are not a realistic concern by
+2026 regardless).
+
+**Stale/removed vehicles showed `"unknown"` forever instead of
+`"unavailable"`.** Confirmed by reading `CoordinatorEntity.available`'s
+actual source: it only checks `coordinator.last_update_success`, a
+whole-coordinator flag - not whether *this specific* `device_id` is still
+present in `coordinator.data`. If one vehicle is removed from the Tibber
+account while others remain, the poll as a whole still succeeds
+(`last_update_success` stays `True`), so the removed vehicle's entities
+would keep reporting "available" with every capability lookup silently
+returning `None` (shown as the ambiguous `"unknown"`), forever, with no
+indication anything's actually wrong. Fixed by overriding `available` in
+`TibberVehicleEntity` to additionally require
+`self._device_id in self.coordinator.data`. This does **not** add live
+device/entity *removal* (a vehicle gone from Tibber still leaves a stale
+device+entities behind, requiring a reload to clean up - see the existing
+"no live add/remove of vehicles" limitation above) - it only fixes the
+*availability signal* so a user isn't misled by a silently-stuck-at-a-value
+sensor. Verified with a new regression test
+(`test_entity_unavailable_when_vehicle_removed`) that removes a vehicle
+between two coordinator refreshes and asserts the resulting state.

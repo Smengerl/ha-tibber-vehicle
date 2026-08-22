@@ -131,3 +131,28 @@ async def test_device_info_manufacturer_omitted_when_brand_missing(
     )
     assert device is not None
     assert device.manufacturer is None
+
+
+async def test_entity_unavailable_when_vehicle_removed(
+    hass: HomeAssistant, setup_credentials: None, aioclient_mock: AiohttpClientMocker
+) -> None:
+    """A vehicle dropping out of the account on a later poll -> unavailable, not "unknown".
+
+    Regression test for the review finding that CoordinatorEntity's
+    default `available` only checks the whole coordinator's
+    last_update_success, not whether this specific device_id is still
+    present - a poll that still succeeds overall (other vehicles remain)
+    would otherwise leave a removed vehicle's entities silently reporting
+    "unknown" forever.
+    """
+    entry = await _setup_one_vehicle(hass, aioclient_mock)
+    assert hass.states.get("sensor.id_7_battery_level").state == "74"
+
+    aioclient_mock.clear_requests()
+    aioclient_mock.get(HOMES_URL, json={"homes": [{"id": "home-1"}]})
+    aioclient_mock.get(DEVICES_URL, text=load_fixture("devices_empty.json"))
+
+    await entry.runtime_data.async_refresh()
+    await hass.async_block_till_done()
+
+    assert hass.states.get("sensor.id_7_battery_level").state == "unavailable"

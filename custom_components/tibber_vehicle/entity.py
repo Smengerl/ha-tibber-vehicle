@@ -42,3 +42,18 @@ class TibberVehicleEntity(CoordinatorEntity[TibberVehicleCoordinator]):
     def _device_data(self) -> dict:
         """Return this entity's own vehicle's current device detail."""
         return self.coordinator.data.get(self._device_id, {})
+
+    @property
+    def available(self) -> bool:
+        """Return False once this specific vehicle drops out of the account.
+
+        CoordinatorEntity's default only checks coordinator.last_update_success
+        - a whole-coordinator flag - so if one vehicle is removed from the
+        Tibber account while others remain, the poll as a whole still
+        succeeds and this entity would otherwise stay "available" forever
+        with every capability lookup silently returning None (shown as
+        "unknown", not the more honest "unavailable"). See
+        docs/DECISIONS.md's known limitations for why there's still no live
+        removal of the device/entities themselves.
+        """
+        return super().available and self._device_id in self.coordinator.data

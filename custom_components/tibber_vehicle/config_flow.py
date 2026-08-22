@@ -5,9 +5,9 @@ integration (homeassistant/components/spotify/config_flow.py) — same
 AbstractOAuth2FlowHandler + extra_authorize_data + async_oauth_create_entry
 shape, adapted to confirm the Tibber account has at least one vehicle
 instead of resolving a user profile. See docs/DECISIONS.md for why HA's
-built-in OAuth2 helper was chosen over weconnect_mvp's tibber_client.py
-loopback-server approach, and for where the resulting token ends up
-stored (the config entry itself, not a file this integration manages).
+built-in OAuth2 helper was chosen over a custom loopback-server approach,
+and for where the resulting token ends up stored (the config entry
+itself, not a file this integration manages).
 
 One config entry = one Tibber account; every vehicle paired to that
 account becomes its own device (see coordinator.py/sensor.py) — there is

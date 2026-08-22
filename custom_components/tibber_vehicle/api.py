@@ -2,9 +2,9 @@
 
 Deliberately thin — only the three GET endpoints this integration needs
 (homes, devices, device detail). Response envelope shapes
-(`{"homes": [...]}`, `{"devices": [...]}`, bare device-detail dict) are
-taken from weconnect_mvp's tibber_client.py, confirmed live against the
-real API on 2026-08-21 — see docs/CONTEXT.md §3. Auth (bearer token) is
+(`{"homes": [...]}`, `{"devices": [...]}`, bare device-detail dict) were
+confirmed live against the real API on 2026-08-21 — see docs/CONTEXT.md
+§3. Auth (bearer token) is
 supplied by the caller via `access_token_provider` rather than handled
 here — this client never sees the OAuth2 flow itself, matching how
 Spotify's `spotifyaio.SpotifyClient.refresh_token_function` keeps API
@@ -93,9 +93,8 @@ class TibberVehicleApiClient:
         device id is required to avoid counting the same vehicle once per
         home. With only the `data-api-vehicles-read` scope granted (this
         integration never requests chargers/thermostats/etc.), the devices
-        endpoint returns vehicles only — confirmed live, see
-        weconnect_mvp's tibber_client.py `vehicles()` docstring — so no
-        extra category filtering is needed here.
+        endpoint returns vehicles only — confirmed live (see
+        docs/CONTEXT.md §3) — so no extra category filtering is needed here.
         """
         seen: set[str] = set()
         result: list[tuple[str, dict[str, Any]]] = []

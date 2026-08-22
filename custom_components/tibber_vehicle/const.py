@@ -1,10 +1,9 @@
 """Constants for the Tibber Vehicle integration.
 
-Values here are taken from the confirmed, live-tested findings in
-weconnect_mvp's experiment/tibber-integration/TIBBER_API.md — see
-docs/CONTEXT.md §3 in this repo for the condensed version. Don't guess at
-replacements without re-checking that document (or the live OpenAPI schema
-at https://data-api.tibber.com/playground/) first.
+Values here are taken from confirmed, live-tested findings against the
+real Tibber Data API — see docs/CONTEXT.md §3 for the summary. Don't guess
+at replacements without re-checking that section (or the live OpenAPI
+schema at https://data-api.tibber.com/playground/) first.
 """
 
 DOMAIN = "tibber_vehicle"

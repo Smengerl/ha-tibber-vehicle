@@ -140,16 +140,26 @@ running it once — see finding 1 above.
     regression test for the hardcoded-`"Volkswagen"`-fallback bug fixed
     2026-08-24; asserts `manufacturer is None` when `info.brand` is
     absent, not a guessed value.
+20. `test_entity_unavailable_when_vehicle_removed` — added 2026-08-24
+    during a second full-project review (not in the original 19-case
+    plan): a vehicle disappearing from a later poll (other vehicles still
+    present, so the coordinator's overall refresh still succeeds) must
+    make that vehicle's entities report `"unavailable"`, not silently
+    keep showing `"unknown"` forever. Regression test for the
+    `available`-property fix in `entity.py` — see `docs/DECISIONS.md`'s
+    "Second full project review" entry.
 
-## Status: all 19 planned cases implemented and passing (2026-08-24)
+## Status: 20/20 cases implemented and passing (2026-08-24)
 
-19/19 tests across all 4 files pass, both individually and in the same run
+20/20 tests across all 4 files pass, both individually and in the same run
 (`pytest tests/`), and in CI (`.github/workflows/validate.yml`'s `pytest`
-job, added alongside this work). Two real, previously-undetected bugs were
-found and fixed purely by writing these tests (the `missing_credentials`
-finding in `test_config_flow.py`, and the `ImplementationUnavailableError`
-vs `ValueError` finding in `test_init.py`) — concrete validation that this
-was worth doing beyond satisfying the Bronze checklist item on paper.
+job, added alongside this work). Three real, previously-undetected bugs
+were found and fixed purely by writing these tests: the `missing_credentials`
+finding in `test_config_flow.py`, the `ImplementationUnavailableError` vs
+`ValueError` finding in `test_init.py`, and the stale-vehicle
+`available`-property gap found during a follow-up full-project review and
+covered by case 20 above — concrete validation that this was worth doing
+beyond satisfying the Bronze checklist item on paper.
 
 Priority order used (kept for reference): `test_config_flow.py` first (the
 actual Bronze checklist item, exercises the highest-risk path), then
