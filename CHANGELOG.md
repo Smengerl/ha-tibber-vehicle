@@ -8,6 +8,12 @@ that level of detail instead of writing it out here.
 
 ## [Unreleased]
 
+### Fixed
+- Confirmed working end-to-end on a real Home Assistant instance
+  (2026-08-23): OAuth2 login against Tibber, vehicle resolution, and all
+  five entities populating correctly. Removed the "not yet verified"
+  status note from `README.md` accordingly.
+
 ### Changed
 - Restructured `README.md` to follow common HA-integration conventions:
   badges (CI status, HACS, license), a short motivation paragraph, a

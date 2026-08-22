@@ -232,14 +232,14 @@ Notes on the places this isn't a blind 1:1 copy:
   was picked from the same icon family VW Connect uses elsewhere for
   plug-related entities (e.g. `mdi:ev-plug-type1` for "Charger type").
 
-**Verification done:** every module import-checked against a real
+**Verification:** every module import-checked against a real
 `homeassistant` pip install (Python 3.14, matching `weconnect_mvp`'s own
 venv) — confirms import paths, class/attribute names, and the PEP 695
-`type` alias syntax are all correct. **Not yet done:** no live OAuth2
-round-trip against Tibber, no boot inside an actual HA instance (Docker
-image pulls were unreachable from this sandboxed environment when tried,
-see `docs/DEVELOPMENT.md` if that's still true later) — that's the
-remaining verification step before this is trustworthy end-to-end.
+`type` alias syntax are all correct. **2026-08-23: confirmed working
+end-to-end on the real Home Assistant instance** — full OAuth2 login
+against Tibber, vehicle resolution, and all five entities populating
+correctly. The Docker-based local boot verification was never actually
+needed in the end; the real-instance test superseded it.
 
 **Known limitations, deliberately deferred rather than blocking a working
 v1:**

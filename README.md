@@ -20,16 +20,6 @@ it into a Home Assistant device with sensor entities, so you get your
 car's charge state back into your dashboards and automations without
 depending on VW's own, currently-unreliable API access.
 
-> [!NOTE]
-> **Status: login flow implemented, not yet verified end-to-end.** Every
-> module has been import-checked against a real `homeassistant` install,
-> but there has been no live OAuth2 round-trip against Tibber yet and no
-> boot inside an actual HA instance — treat this as "should work" rather
-> than "confirmed working" until that verification happens. See
-> [`docs/DECISIONS.md`](docs/DECISIONS.md) for exactly what's implemented
-> and the known, deliberately deferred gaps (no PKCE, no reauth flow, no
-> multi-vehicle support).
-
 ![Tibber Vehicle device with its entities in Home Assistant](docs/images/screenshot.svg)
 <!-- TODO: replace docs/images/screenshot.svg with a real screenshot (PNG) of the Tibber Vehicle device once the integration has been verified end-to-end against a live vehicle. -->
 
