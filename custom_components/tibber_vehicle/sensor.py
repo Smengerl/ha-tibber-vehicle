@@ -2,15 +2,16 @@
 
 Entity setup modeled on Home Assistant core's Spotify integration —
 SensorEntityDescription tuple + typed ConfigEntry.runtime_data instead of
-hass.data[DOMAIN]. Four of Tibber's five vehicle capabilities map to
-sensors here (the fifth, connector.status, is a binary_sensor — see
-binary_sensor.py). Names/icons/units/device_classes/state_classes are
-matched 1:1 to the equivalent entities in the
+hass.data[DOMAIN]. All five of Tibber's vehicle capabilities map to
+sensors here. Names/icons/units/device_classes/state_classes are matched
+1:1 to the equivalent entities in the
 robinostlund/homeassistant-volkswagencarnet integration (backed by the
 `volkswagencarnet` PyPI package's vw_dashboard.py) so a user switching
 between a direct VW connection and this Tibber-backed one sees the same
-entity identity — see docs/DECISIONS.md for the full comparison table and
-reasoning.
+entity identity, with one deliberate exception: connector.status stays a
+plain string sensor rather than VW Connect's binary_sensor
+("external_power") — see docs/DECISIONS.md for the full comparison table
+and reasoning.
 """
 from __future__ import annotations
 
@@ -25,6 +26,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
     CAPABILITY_CHARGING_STATUS,
+    CAPABILITY_CONNECTOR_STATUS,
     CAPABILITY_RANGE_REMAINING,
     CAPABILITY_STATE_OF_CHARGE,
     CAPABILITY_TARGET_STATE_OF_CHARGE,
@@ -70,6 +72,16 @@ SENSOR_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
         key=CAPABILITY_CHARGING_STATUS,
         name="Charging state",
         icon="mdi:car-turbocharger",
+    ),
+    # Deliberately NOT matched to VW Connect's "external_power"
+    # binary_sensor (see docs/DECISIONS.md) — kept as a plain string
+    # sensor so all three of Tibber's actual values (connected/
+    # disconnected/unknown) stay directly visible instead of collapsing
+    # "unknown" into a generic unavailable state.
+    SensorEntityDescription(
+        key=CAPABILITY_CONNECTOR_STATUS,
+        name="Plug status",
+        icon="mdi:ev-plug-type2",
     ),
 )
 

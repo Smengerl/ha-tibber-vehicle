@@ -42,12 +42,15 @@ repo reuses from it).
 Per paired vehicle, 5 entities — this is the *complete* data surface the
 Tibber Data API offers for vehicles, confirmed by direct inspection of its
 OpenAPI schema (no doors/climate/position/lock data exists in this API at
-all). Entity type, name, icon, unit, and device class are matched 1:1 to
-the equivalent entity in the `robinostlund/homeassistant-volkswagencarnet`
-integration (the direct-VW route this project is a fallback for), so
-switching between the two — or running both side by side — shows
-consistent entity identity rather than two differently-named things for
-the same data. Full comparison and reasoning in
+all). Name, icon, unit, and device class are matched to the equivalent
+entity in the `robinostlund/homeassistant-volkswagencarnet` integration
+(the direct-VW route this project is a fallback for) wherever that makes
+sense, so switching between the two — or running both side by side —
+shows consistent entity identity rather than two differently-named things
+for the same data. One deliberate exception: `connector.status` stays a
+plain sensor here rather than VW Connect's `binary_sensor`, so all three
+of Tibber's actual values (connected/disconnected/unknown) stay directly
+visible. Full comparison and reasoning in
 [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
 | Entity | Type | Tibber capability id | Unit / device class |
@@ -55,7 +58,7 @@ the same data. Full comparison and reasoning in
 | Battery level | sensor | `storage.stateOfCharge` | %, `battery`, measurement |
 | Battery target charge level | sensor | `storage.targetStateOfCharge` | %, `battery` |
 | Electric range | sensor | `range.remaining` | km (converted from m), `distance`, measurement |
-| External power | binary_sensor | `connector.status` | `power` |
+| Plug status | sensor | `connector.status` | — |
 | Charging state | sensor | `charging.status` | — |
 
 No write/control support is possible — the Tibber Data API is read-only

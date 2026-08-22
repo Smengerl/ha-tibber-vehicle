@@ -9,17 +9,19 @@ that level of detail instead of writing it out here.
 ## [Unreleased]
 
 ### Changed
-- All entity names, icons, units, and device classes now match the
-  equivalent entity in `robinostlund/homeassistant-volkswagencarnet`
-  (Battery level, Battery target charge level, Electric range, External
-  power, Charging state) instead of the generic placeholder names from
-  the initial implementation — so dashboards/history built against either
-  integration use consistent entity identity. The plug-status entity
-  (`connector.status`) also changed **type**, from a plain sensor to a
-  `binary_sensor` (device_class `power`), matching VW Connect's own
-  `external_power` entity. Full comparison table and reasoning (including
-  the two deliberate deviations from a blind 1:1 copy) in
-  `docs/DECISIONS.md`.
+- Entity names, icons, units, and device classes now match the equivalent
+  entity in `robinostlund/homeassistant-volkswagencarnet` (Battery level,
+  Battery target charge level, Electric range, Charging state) instead of
+  the generic placeholder names from the initial implementation — so
+  dashboards/history built against either integration use consistent
+  entity identity. Full comparison table and reasoning (including the
+  deliberate deviations from a blind 1:1 copy) in `docs/DECISIONS.md`.
+- The plug-status entity (`connector.status`) briefly changed type to a
+  `binary_sensor` (matching VW Connect's `external_power`), then was
+  reverted back to a plain sensor named "Plug status" — collapsing
+  Tibber's `unknown` value into `binary_sensor`'s generic
+  unavailable/unknown state lost visible distinction from `disconnected`,
+  which wasn't wanted. See `docs/DECISIONS.md` for the full back-and-forth.
 
 ### Fixed
 - `README.md` step 1 didn't say to give the Tibber OAuth2 client a

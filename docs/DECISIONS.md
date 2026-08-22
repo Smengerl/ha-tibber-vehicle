@@ -176,18 +176,18 @@ and the modern `entry.runtime_data` pattern (a typed
 
 ## Entity identity matched to `homeassistant-volkswagencarnet`, not invented fresh
 
-2026-08-22: entity names, icons, units, device classes, and even entity
-*type* (sensor vs. binary_sensor) were changed to match the equivalent
-entity in `robinostlund/homeassistant-volkswagencarnet` (backed by the
-`volkswagencarnet` PyPI package's `vw_dashboard.py`, which defines every
-instrument as `(EntityClass, [], {"attr": ..., "name": ..., "icon": ...,
-"unit": ..., "device_class": ..., "state_class": ...})` tuples). Reasoning:
-this project exists specifically as a fallback data source for the same
-underlying question ("what's my VW doing") that `volkswagencarnet` answers
-when it isn't blocked (see `docs/CONTEXT.md` §1) — matching identity means
-a user's dashboards/automations/history graphs built against one keep
-working (or need only a device swap, not an entity rewrite) if they ever
-switch between the two, or run both and want consistent naming.
+2026-08-22: entity names, icons, units, and device classes were changed to
+match the equivalent entity in `robinostlund/homeassistant-volkswagencarnet`
+(backed by the `volkswagencarnet` PyPI package's `vw_dashboard.py`, which
+defines every instrument as `(EntityClass, [], {"attr": ..., "name": ...,
+"icon": ..., "unit": ..., "device_class": ..., "state_class": ...})`
+tuples). Reasoning: this project exists specifically as a fallback data
+source for the same underlying question ("what's my VW doing") that
+`volkswagencarnet` answers when it isn't blocked (see `docs/CONTEXT.md`
+§1) — matching identity means a user's dashboards/automations/history
+graphs built against one keep working (or need only a device swap, not an
+entity rewrite) if they ever switch between the two, or run both and want
+consistent naming.
 
 Comparison table (VW Connect's `attr` is its internal instrument key, not
 user-visible — the `name` column is what actually matters for this match):
@@ -197,10 +197,10 @@ user-visible — the `name` column is what actually matters for this match):
 | `storage.stateOfCharge` | `battery_level` | Battery level | `mdi:battery` | % | `battery` | `measurement` | sensor |
 | `storage.targetStateOfCharge` | `battery_target_charge_level` | Battery target charge level | `mdi:battery-arrow-up` | % | `battery` | — | sensor |
 | `range.remaining` | `electric_range` | Electric range | `mdi:car-electric` | km | `distance` | `measurement` | sensor |
-| `connector.status` | `external_power` | External power | (device_class default) | — | `power` | — | **binary_sensor** |
+| `connector.status` | `external_power` | *not matched — see below* | `mdi:ev-plug-type2` | — | — | — | sensor |
 | `charging.status` | `charging_state` | Charging state | `mdi:car-turbocharger` | — | — | — | sensor |
 
-Notes on the two places this isn't a blind 1:1 copy:
+Notes on the places this isn't a blind 1:1 copy:
 - **`range.remaining` → `electric_range`, not `battery_cruising_range`.**
   VW Connect has both; `electric_range` ("Electric range") is the direct
   semantic match to Tibber's own field description ("estimated remaining
@@ -215,13 +215,22 @@ Notes on the two places this isn't a blind 1:1 copy:
   nothing, would be actively misleading. The plain-`Sensor` metadata
   (name/icon/unit/device_class) is what's matched here, not the `Number`
   entity's.
-- **`connector.status` became a `binary_sensor`, matching VW Connect's
-  actual entity type** (`external_power`, device_class `power`) — not kept
-  as a generic string sensor the way it started. Tibber's third possible
-  value (`"unknown"`, alongside `connected`/`disconnected`) maps to
-  `is_on` returning `None`, which HA's binary_sensor renders as
-  unavailable/unknown state — no information is lost by using a proper
-  binary_sensor instead of a string.
+- **`connector.status` deliberately stays a plain `sensor`, not VW
+  Connect's `binary_sensor`.** A first pass (same day) did match VW
+  Connect's actual entity type here too — `TibberVehicleBinarySensor`
+  mapping `connected`/`disconnected` to `True`/`False` and `"unknown"` to
+  `is_on` returning `None` (HA's unavailable/unknown state). Simon then
+  asked to revert this one back to a string sensor — the binary_sensor
+  *type* being technically valid wasn't the issue, but the tri-state
+  Tibber value collapsing "unknown" into a generic unavailable state
+  (rather than staying visibly distinct from `disconnected`) apparently
+  wasn't wanted. Reverted to `SensorEntityDescription(name="Plug status",
+  icon="mdi:ev-plug-type2")` — `binary_sensor.py` removed,
+  `Platform.BINARY_SENSOR` removed from `__init__.py`'s `PLATFORMS`.
+  `mdi:ev-plug-type2` (not one of VW Connect's own icons for this
+  specific field, since VW has no string-sensor equivalent to copy from)
+  was picked from the same icon family VW Connect uses elsewhere for
+  plug-related entities (e.g. `mdi:ev-plug-type1` for "Charger type").
 
 **Verification done:** every module import-checked against a real
 `homeassistant` pip install (Python 3.14, matching `weconnect_mvp`'s own
