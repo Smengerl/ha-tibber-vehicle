@@ -40,10 +40,14 @@ from .entity import TibberVehicleEntity
 PARALLEL_UPDATES = 0
 
 SENSOR_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
-    # Matches volkswagencarnet's "battery_level" sensor.
+    # Matches volkswagencarnet's "battery_level" sensor. translation_key
+    # (not a literal `name`) so the displayed name follows the user's HA
+    # language - see translations/*.json for the actual strings; the key
+    # itself doubles as the stable English entity_id slug regardless of
+    # active language.
     SensorEntityDescription(
         key=CAPABILITY_STATE_OF_CHARGE,
-        name="Battery level",
+        translation_key="battery_level",
         icon="mdi:battery",
         native_unit_of_measurement="%",
         device_class=SensorDeviceClass.BATTERY,
@@ -55,7 +59,7 @@ SENSOR_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
     # Tibber's API is read-only (can't actually change the target).
     SensorEntityDescription(
         key=CAPABILITY_TARGET_STATE_OF_CHARGE,
-        name="Battery target charge level",
+        translation_key="battery_target_charge_level",
         icon="mdi:battery-arrow-up",
         native_unit_of_measurement="%",
         device_class=SensorDeviceClass.BATTERY,
@@ -65,7 +69,7 @@ SENSOR_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
     # remaining driving range"] maps to the former, not a computed variant).
     SensorEntityDescription(
         key=CAPABILITY_RANGE_REMAINING,
-        name="Electric range",
+        translation_key="electric_range",
         icon="mdi:car-electric",
         native_unit_of_measurement="km",
         device_class=SensorDeviceClass.DISTANCE,
@@ -75,7 +79,7 @@ SENSOR_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
     # no device_class/state_class there either.
     SensorEntityDescription(
         key=CAPABILITY_CHARGING_STATUS,
-        name="Charging state",
+        translation_key="charging_state",
         icon="mdi:car-turbocharger",
     ),
     # Deliberately NOT matched to VW Connect's "external_power"
@@ -85,7 +89,7 @@ SENSOR_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
     # "unknown" into a generic unavailable state.
     SensorEntityDescription(
         key=CAPABILITY_CONNECTOR_STATUS,
-        name="Plug status",
+        translation_key="plug_status",
         icon="mdi:ev-plug-type2",
     ),
 )

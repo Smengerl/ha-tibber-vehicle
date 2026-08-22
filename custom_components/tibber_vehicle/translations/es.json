@@ -1,0 +1,48 @@
+{
+  "config": {
+    "step": {
+      "pick_implementation": {
+        "title": "Elegir método de autenticación"
+      }
+    },
+    "abort": {
+      "already_configured": "Esta cuenta de Tibber ya está configurada.",
+      "authorize_url_timeout": "Tiempo de espera agotado al generar la URL de autorización.",
+      "connection_error": "No se pudo encontrar un vehículo emparejado. ¿Tu cuenta de Tibber es accesible y tiene un vehículo emparejado?",
+      "missing_configuration": "La integración Tibber Vehicle no está configurada. Sigue la documentación.",
+      "missing_credentials": "La integración requiere credenciales.",
+      "no_url_available": "No hay ninguna URL disponible. Para más información sobre este error, [consulta la sección de ayuda]({docs_url}).",
+      "no_vehicle_found": "No hay ningún vehículo emparejado con esta cuenta de Tibber. Empareja primero un vehículo en la app de Tibber y vuelve a intentarlo.",
+      "oauth_error": "Se recibieron datos de token no válidos.",
+      "oauth_failed": "Error al obtener el token de acceso.",
+      "oauth_implementation_unavailable": "La implementación de autenticación seleccionada no está disponible.",
+      "oauth_timeout": "Tiempo de espera agotado al resolver el token de OAuth2.",
+      "oauth_unauthorized": "Error de autorización de OAuth2 al obtener el token de acceso."
+    },
+    "create_entry": {
+      "default": "Autenticación con Tibber realizada correctamente."
+    }
+  },
+  "application_credentials": {
+    "description": "Para vincular tu cuenta de Tibber necesitas un cliente OAuth2. Sigue estos pasos para registrar uno.\n\n1. Ve a la [página de registro de clientes de Tibber]({client_registration_url}) e inicia sesión con tu cuenta de Tibber.\n1. Crea un nuevo cliente.\n1. En los ámbitos (scopes), selecciona al menos `data-api-homes-read` y `data-api-vehicles-read`.\n1. Introduce `{redirect_url}` como URI de redirección. Esto funciona incluso si tu instancia de Home Assistant no tiene una URL pública — consulta `docs/DECISIONS.md` de esta integración para saber por qué.\n1. Introduce el ID de cliente y el secreto que se muestran ahora (el secreto solo se muestra una vez)."
+  },
+  "entity": {
+    "sensor": {
+      "battery_level": {
+        "name": "Nivel de batería"
+      },
+      "battery_target_charge_level": {
+        "name": "Nivel de carga objetivo"
+      },
+      "electric_range": {
+        "name": "Autonomía eléctrica"
+      },
+      "charging_state": {
+        "name": "Estado de carga"
+      },
+      "plug_status": {
+        "name": "Estado del enchufe"
+      }
+    }
+  }
+}

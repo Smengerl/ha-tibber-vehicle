@@ -1,0 +1,48 @@
+{
+  "config": {
+    "step": {
+      "pick_implementation": {
+        "title": "Authentifizierungsmethode auswählen"
+      }
+    },
+    "abort": {
+      "already_configured": "Dieses Tibber-Konto ist bereits konfiguriert.",
+      "authorize_url_timeout": "Zeitüberschreitung beim Erzeugen der Autorisierungs-URL.",
+      "connection_error": "Es konnte kein gekoppeltes Fahrzeug ermittelt werden. Ist dein Tibber-Konto erreichbar und ist ein Fahrzeug damit verknüpft?",
+      "missing_configuration": "Die Integration „Tibber Vehicle“ ist nicht konfiguriert. Bitte folge der Dokumentation.",
+      "missing_credentials": "Die Integration benötigt Anmeldedaten.",
+      "no_url_available": "Keine URL verfügbar. Informationen zu diesem Fehler findest du im [Hilfebereich]({docs_url}).",
+      "no_vehicle_found": "Mit diesem Tibber-Konto ist kein Fahrzeug verknüpft. Verknüpfe zuerst ein Fahrzeug in der Tibber-App und versuche es dann erneut.",
+      "oauth_error": "Es wurden ungültige Token-Daten empfangen.",
+      "oauth_failed": "Fehler beim Abrufen des Zugriffstokens.",
+      "oauth_implementation_unavailable": "Die ausgewählte Authentifizierungsmethode ist nicht verfügbar.",
+      "oauth_timeout": "Zeitüberschreitung beim Abrufen des OAuth2-Tokens.",
+      "oauth_unauthorized": "OAuth2-Autorisierungsfehler beim Abrufen des Zugriffstokens."
+    },
+    "create_entry": {
+      "default": "Erfolgreich mit Tibber authentifiziert."
+    }
+  },
+  "application_credentials": {
+    "description": "Um dein Tibber-Konto zu verknüpfen, benötigst du einen OAuth2-Client. Folge diesen Schritten, um einen zu registrieren.\n\n1. Gehe zur [Tibber-Client-Registrierungsseite]({client_registration_url}) und melde dich mit deinem Tibber-Konto an.\n1. Erstelle einen neuen Client.\n1. Wähle unter „Scopes“ mindestens `data-api-homes-read` und `data-api-vehicles-read` aus.\n1. Trage `{redirect_url}` als Redirect-URI ein. Das funktioniert auch, wenn deine Home-Assistant-Instanz keine öffentliche URL hat — siehe `docs/DECISIONS.md` dieser Integration für den Grund.\n1. Trage die jetzt angezeigte Client-ID und das Secret ein (das Secret wird nur einmal angezeigt)."
+  },
+  "entity": {
+    "sensor": {
+      "battery_level": {
+        "name": "Akkustand"
+      },
+      "battery_target_charge_level": {
+        "name": "Ziel-Ladestand"
+      },
+      "electric_range": {
+        "name": "Elektrische Reichweite"
+      },
+      "charging_state": {
+        "name": "Ladezustand"
+      },
+      "plug_status": {
+        "name": "Steckerstatus"
+      }
+    }
+  }
+}
