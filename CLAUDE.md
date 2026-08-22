@@ -68,12 +68,32 @@ following it.
 ## HA Integration Quality Scale — the bar to measure code against
 
 Home Assistant's official [Integration Quality Scale checklist](https://developers.home-assistant.io/docs/core/integration-quality-scale/checklist)
-is the reference used for the pre-1.0.0 review (2026-08-24) and should be
-the standard yardstick going forward — not just a one-time audit. **When
-writing or reviewing code in this repo, check it against Bronze at
-minimum, and proactively tell the user when a change introduces a gap
-against any tier (a regression on something previously passing, or an
-easy win left on the table) rather than noting it silently and moving on.**
+(four tiers: Bronze → Silver → Gold → Platinum, each a superset of the one
+below) is the reference used for the pre-1.0.0 review (2026-08-24) and
+should be the standard yardstick going forward — not just a one-time
+audit.
+
+**Target policy (the user's explicit call, 2026-08-25 — treat as settled,
+don't re-litigate without asking):**
+- **Bronze: mandatory, always.** Every rule below must stay ✅ or N/A. A
+  change that regresses a previously-passing Bronze rule is a blocker to
+  fix in the same change, not something to note and move past.
+- **Silver: desirable, not mandatory.** Worth closing a gap opportunistically
+  when it's cheap or comes up naturally while touching related code, but
+  not a blocker for shipping or releasing.
+- **Gold: optional.** Nice-to-have at most. Don't invest deliberate effort
+  here unless the user asks, or a rule happens to be satisfied as a
+  side-effect of other work (e.g. `entity-translations` was, by the
+  translations feature).
+- **Platinum: not tracked at all currently** — listed at the very bottom
+  for completeness only, no per-rule status kept.
+
+**When writing or reviewing code in this repo, always check it against
+Bronze, and proactively tell the user when a change introduces a gap
+against any tier** (a regression on something previously passing, or an
+easy win left on the table) rather than noting it silently and moving on —
+this applies even to Gold, since "optional" means "not required", not
+"don't mention it".
 
 ### Bronze (the bar this integration should always meet)
 
@@ -98,16 +118,51 @@ easy win left on the table) rather than noting it silently and moving on.**
 | `test-before-setup` | Verify init works before completing setup | ✅ `async_config_entry_first_refresh` raises `ConfigEntryNotReady` on failure, covered by `tests/test_init.py` |
 | `unique-config-entry` | Can't set up the same account twice | ✅ `_abort_if_unique_id_configured()` keyed on home ids |
 
-### Silver / Gold (aspirational — not required for v1.0.0, but worth knowing what's deliberately deferred)
+### Silver (desirable — close gaps opportunistically, not a blocker)
 
-Full lists in the checklist linked above. Relevant ones already tracked as
-deliberate, documented scope boundaries in `docs/DECISIONS.md`: no reauth
-flow, no PKCE, no live dynamic-device addition (a vehicle paired in Tibber
-after setup needs a reload). Not yet done and not yet decided either way:
-`diagnostics.py`, entity/icon translations, a linter/`pyproject.toml`
-config. Don't silently start building toward these — if one comes up
-naturally, mention it and let the user decide whether it's worth doing now
-or staying deferred, same as any other scope decision in this repo.
+| Rule | Requirement | Status as of 2026-08-25 |
+|---|---|---|
+| `action-exceptions` | Service actions raise exceptions on failure | N/A — no service actions |
+| `config-entry-unloading` | Support config entry unloading | ✅ `async_unload_entry` in `__init__.py` |
+| `docs-configuration-parameters` | Document all configuration options | N/A — no configurable options beyond the one-time OAuth2 setup, which README already documents |
+| `docs-installation-parameters` | Document all installation parameters | ✅ README "Prerequisites" (scopes, redirect URI, client registration steps) |
+| `entity-unavailable` | Mark entity unavailable when appropriate | ✅ fixed 2026-08-24 — `TibberVehicleEntity.available` also requires `self._device_id in self.coordinator.data`, not just the whole coordinator's `last_update_success` |
+| `integration-owner` | Has a codeowner | ✅ `manifest.json`'s `"codeowners": ["@Smengerl"]` |
+| `log-when-unavailable` | Log when a connection is lost/restored | 🟡 not explicitly implemented in this integration's own code — relies entirely on `DataUpdateCoordinator`'s built-in logging, never verified that it actually covers this |
+| `parallel-updates` | `PARALLEL_UPDATES` specified | ✅ `sensor.py`, set to `0` (coordinator-driven, no per-entity I/O to throttle) |
+| `reauthentication-flow` | Reauthentication available via the UI | ❌ known, deliberately deferred gap — see `docs/DECISIONS.md`'s "Login flow implementation" |
+| `test-coverage` | Above 95% test coverage | ❌ not measured — 20 tests exist (`docs/TESTING.md`'s full planned case list, all passing), but coverage % has never actually been run/checked |
+
+### Gold (optional — nice-to-have at most, don't invest effort unasked)
+
+| Rule | Requirement | Status as of 2026-08-25 |
+|---|---|---|
+| `devices` | Integration creates devices | ✅ one device per paired vehicle |
+| `diagnostics` | Implements diagnostics | ❌ no `diagnostics.py` |
+| `discovery` | Devices can be discovered | N/A — cloud-polling integration against a Tibber account, nothing on the local network to discover |
+| `discovery-update-info` | Discovery info updates network details | N/A — same reason as `discovery` |
+| `docs-data-update` | Document how data is updated | ✅ README (5-minute polling; "Data freshness depends on Tibber, not just this integration") |
+| `docs-examples` | Provide automation examples | ❌ none in README |
+| `docs-known-limitations` | Document known limitations | ✅ README "Known Issues / Limitations" |
+| `docs-supported-devices` | Document known supported/unsupported devices | 🟡 partial — README says "for every vehicle paired inside your Tibber account, regardless of make" but also flags (as of the 2026-08-25 review) that only a Volkswagen has actually been verified end-to-end |
+| `docs-supported-functions` | Document supported functionality | ✅ README "Entities" section, one subsection per sensor |
+| `docs-troubleshooting` | Provide troubleshooting information | ❌ none dedicated — only the in-the-moment config-flow abort messages |
+| `docs-use-cases` | Describe use cases | ❌ none |
+| `dynamic-devices` | Devices added after integration setup, without a reload | ❌ known, deliberately deferred gap — a vehicle paired in Tibber after setup needs a manual reload (README "Known Issues") |
+| `entity-category` | Entities assigned an appropriate `EntityCategory` | ✅ correctly left unset — all 5 entities are primary state, none are diagnostic/config-category candidates |
+| `entity-device-class` | Use device classes where possible | ✅ `battery`/`distance` set where a matching class exists; `charging_state`/`plug_status` have no corresponding HA device class to use instead |
+| `entity-disabled-by-default` | Disable less-popular/noisy entities by default | N/A — all 5 entities are core to the integration's purpose, none are noisy or niche |
+| `entity-translations` | Entities have translated names | ✅ **closed 2026-08-24** (as a side effect of the translations feature, not a deliberate Gold push) — `translation_key` on every `SensorEntityDescription` + `translations/{en,de,fr,es}.json` |
+| `exception-translations` | Exception messages are translatable | ❌ exceptions raised as plain strings — no `translation_domain`/`translation_key` |
+| `icon-translations` | Entities implement icon translations | ❌ icons set directly via `icon="mdi:..."` on each `SensorEntityDescription`, no `icons.json` |
+| `reconfiguration-flow` | Integration has a reconfigure flow | ❌ none |
+| `repair-issues` | Repair issues/flows used when user intervention is needed | ❌ none |
+| `stale-devices` | Stale devices are removed automatically | ❌ known, deliberately deferred gap — a vehicle removed from Tibber leaves an unavailable-but-undeleted device behind until a manual reload (README "Known Issues") |
+
+### Platinum (not tracked — listed only for completeness)
+
+`async-dependency`, `inject-websession`, `strict-typing`. No per-rule
+status kept for this tier; not part of the current policy.
 
 ### CI must stay green — always, especially the `hacs` job
 
