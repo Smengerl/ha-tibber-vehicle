@@ -33,6 +33,10 @@ that level of detail instead of writing it out here.
   Tibber or inside a booted HA instance** — see `docs/DECISIONS.md`'s
   "Login flow implementation" for the full detail and known, deliberately
   deferred gaps (no PKCE, no reauth, single-vehicle-only).
+- New `entity.py`: all five sensors now group under one HA **device**
+  representing the paired vehicle (manufacturer/model shown, VIN as
+  identifier) instead of appearing as five ungrouped entities — this had
+  been missed in the first implementation pass.
 
 ### Fixed
 - `docs/DEVELOPMENT.md` install order: Application Credentials can only be

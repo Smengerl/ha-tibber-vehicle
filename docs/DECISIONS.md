@@ -162,6 +162,17 @@ and the modern `entry.runtime_data` pattern (a typed
   `TibberVehicleApiError` as `UpdateFailed`; sensors read their capability
   id out of `coordinator.data["capabilities"]`, converting `range.remaining`
   from meters to km.
+- **`entity.py`** (new, added after the first pass missed it): a shared
+  `TibberVehicleEntity(CoordinatorEntity)` base class setting
+  `_attr_device_info`, so all five sensors group under one HA **device**
+  representing the vehicle itself (identified by VIN, manufacturer/model
+  from the device detail's `info` object) — this is the actual point of
+  the integration ("the car should appear as a device", not five loose
+  entities with no device grouping). Modeled on Spotify's own `entity.py`,
+  but **without** `entry_type=DeviceEntryType.SERVICE` — Spotify sets that
+  because its "device" is a cloud account; ours is a physical vehicle, so
+  it should register as a regular device, not get folded into HA's
+  "services" bucket.
 
 **Verification done:** every module import-checked against a real
 `homeassistant` pip install (Python 3.14, matching `weconnect_mvp`'s own

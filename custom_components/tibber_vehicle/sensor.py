@@ -4,14 +4,14 @@ Entity setup modeled on Home Assistant core's Spotify integration —
 SensorEntityDescription tuple + typed ConfigEntry.runtime_data instead of
 hass.data[DOMAIN]. Five sensors mapping 1:1 to Tibber's complete vehicle
 capability set (see docs/DECISIONS.md) — no attempt to backfill data this
-API simply doesn't have.
+API simply doesn't have. All five are grouped under one device via
+TibberVehicleEntity (entity.py) — the paired vehicle itself.
 """
 from __future__ import annotations
 
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
     CAPABILITY_CHARGING_STATUS,
@@ -21,6 +21,7 @@ from .const import (
     CAPABILITY_TARGET_STATE_OF_CHARGE,
 )
 from .coordinator import TibberVehicleConfigEntry, TibberVehicleCoordinator
+from .entity import TibberVehicleEntity
 
 SENSOR_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
@@ -57,26 +58,23 @@ async def async_setup_entry(
     """Set up Tibber Vehicle sensors from a config entry."""
     coordinator = entry.runtime_data
     async_add_entities(
-        TibberVehicleSensor(coordinator, entry, description)
+        TibberVehicleSensor(coordinator, description)
         for description in SENSOR_DESCRIPTIONS
     )
 
 
-class TibberVehicleSensor(CoordinatorEntity[TibberVehicleCoordinator], SensorEntity):
+class TibberVehicleSensor(TibberVehicleEntity, SensorEntity):
     """A single capability of a Tibber-paired vehicle."""
-
-    _attr_has_entity_name = True
 
     def __init__(
         self,
         coordinator: TibberVehicleCoordinator,
-        entry: TibberVehicleConfigEntry,
         description: SensorEntityDescription,
     ) -> None:
         """Initialize."""
         super().__init__(coordinator)
         self.entity_description = description
-        self._attr_unique_id = f"{entry.unique_id}_{description.key}"
+        self._attr_unique_id = f"{coordinator.config_entry.unique_id}_{description.key}"
 
     @property
     def native_value(self) -> str | int | float | None:
