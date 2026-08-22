@@ -37,20 +37,26 @@ further-along Tibber OAuth2 proof-of-concept — see
 [`docs/CONTEXT.md`](docs/CONTEXT.md) for how the two relate and what this
 repo reuses from it).
 
-## What it will expose (planned)
+## What it exposes
 
-Per paired vehicle, up to 5 sensor entities — this is the *complete* data
-surface the Tibber Data API offers for vehicles, confirmed by direct
-inspection of its OpenAPI schema (no doors/climate/position/lock data exists
-in this API at all):
+Per paired vehicle, 5 entities — this is the *complete* data surface the
+Tibber Data API offers for vehicles, confirmed by direct inspection of its
+OpenAPI schema (no doors/climate/position/lock data exists in this API at
+all). Entity type, name, icon, unit, and device class are matched 1:1 to
+the equivalent entity in the `robinostlund/homeassistant-volkswagencarnet`
+integration (the direct-VW route this project is a fallback for), so
+switching between the two — or running both side by side — shows
+consistent entity identity rather than two differently-named things for
+the same data. Full comparison and reasoning in
+[`docs/DECISIONS.md`](docs/DECISIONS.md).
 
-| Entity (planned) | Tibber capability id | Unit |
-|---|---|---|
-| State of charge | `storage.stateOfCharge` | % |
-| Target state of charge | `storage.targetStateOfCharge` | % |
-| Estimated range | `range.remaining` | km (converted from m) |
-| Plug status | `connector.status` | connected / disconnected / unknown |
-| Charging status | `charging.status` | charging / idle / unknown |
+| Entity | Type | Tibber capability id | Unit / device class |
+|---|---|---|---|
+| Battery level | sensor | `storage.stateOfCharge` | %, `battery`, measurement |
+| Battery target charge level | sensor | `storage.targetStateOfCharge` | %, `battery` |
+| Electric range | sensor | `range.remaining` | km (converted from m), `distance`, measurement |
+| External power | binary_sensor | `connector.status` | `power` |
+| Charging state | sensor | `charging.status` | — |
 
 No write/control support is possible — the Tibber Data API is read-only
 (confirmed: only `GET` endpoints exist in its schema).

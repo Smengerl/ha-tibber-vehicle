@@ -24,7 +24,7 @@ from homeassistant.helpers.config_entry_oauth2_flow import (
 from .api import TibberVehicleApiClient
 from .coordinator import TibberVehicleConfigEntry, TibberVehicleCoordinator
 
-PLATFORMS = [Platform.SENSOR]
+PLATFORMS = [Platform.BINARY_SENSOR, Platform.SENSOR]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: TibberVehicleConfigEntry) -> bool:

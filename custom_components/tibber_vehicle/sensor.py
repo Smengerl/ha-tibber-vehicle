@@ -2,20 +2,29 @@
 
 Entity setup modeled on Home Assistant core's Spotify integration —
 SensorEntityDescription tuple + typed ConfigEntry.runtime_data instead of
-hass.data[DOMAIN]. Five sensors mapping 1:1 to Tibber's complete vehicle
-capability set (see docs/DECISIONS.md) — no attempt to backfill data this
-API simply doesn't have. All five are grouped under one device via
-TibberVehicleEntity (entity.py) — the paired vehicle itself.
+hass.data[DOMAIN]. Four of Tibber's five vehicle capabilities map to
+sensors here (the fifth, connector.status, is a binary_sensor — see
+binary_sensor.py). Names/icons/units/device_classes/state_classes are
+matched 1:1 to the equivalent entities in the
+robinostlund/homeassistant-volkswagencarnet integration (backed by the
+`volkswagencarnet` PyPI package's vw_dashboard.py) so a user switching
+between a direct VW connection and this Tibber-backed one sees the same
+entity identity — see docs/DECISIONS.md for the full comparison table and
+reasoning.
 """
 from __future__ import annotations
 
-from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorEntityDescription,
+    SensorStateClass,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
     CAPABILITY_CHARGING_STATUS,
-    CAPABILITY_CONNECTOR_STATUS,
     CAPABILITY_RANGE_REMAINING,
     CAPABILITY_STATE_OF_CHARGE,
     CAPABILITY_TARGET_STATE_OF_CHARGE,
@@ -24,28 +33,43 @@ from .coordinator import TibberVehicleConfigEntry, TibberVehicleCoordinator
 from .entity import TibberVehicleEntity
 
 SENSOR_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
+    # Matches volkswagencarnet's "battery_level" sensor.
     SensorEntityDescription(
         key=CAPABILITY_STATE_OF_CHARGE,
-        name="State of Charge",
+        name="Battery level",
+        icon="mdi:battery",
         native_unit_of_measurement="%",
+        device_class=SensorDeviceClass.BATTERY,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
+    # Matches volkswagencarnet's "battery_target_charge_level" sensor. No
+    # state_class there either — VW models the writable version of this as
+    # a separate Number entity, which would be misleading here since
+    # Tibber's API is read-only (can't actually change the target).
     SensorEntityDescription(
         key=CAPABILITY_TARGET_STATE_OF_CHARGE,
-        name="Target State of Charge",
+        name="Battery target charge level",
+        icon="mdi:battery-arrow-up",
         native_unit_of_measurement="%",
+        device_class=SensorDeviceClass.BATTERY,
     ),
+    # Matches volkswagencarnet's "electric_range" sensor (not its separate
+    # "battery_cruising_range" — Tibber's range.remaining ["estimated
+    # remaining driving range"] maps to the former, not a computed variant).
     SensorEntityDescription(
         key=CAPABILITY_RANGE_REMAINING,
-        name="Range",
+        name="Electric range",
+        icon="mdi:car-electric",
         native_unit_of_measurement="km",
+        device_class=SensorDeviceClass.DISTANCE,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
-    SensorEntityDescription(
-        key=CAPABILITY_CONNECTOR_STATUS,
-        name="Plug Status",
-    ),
+    # Matches volkswagencarnet's "charging_state" sensor — a plain string,
+    # no device_class/state_class there either.
     SensorEntityDescription(
         key=CAPABILITY_CHARGING_STATUS,
-        name="Charging Status",
+        name="Charging state",
+        icon="mdi:car-turbocharger",
     ),
 )
 

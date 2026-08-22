@@ -164,7 +164,7 @@ and the modern `entry.runtime_data` pattern (a typed
   from meters to km.
 - **`entity.py`** (new, added after the first pass missed it): a shared
   `TibberVehicleEntity(CoordinatorEntity)` base class setting
-  `_attr_device_info`, so all five sensors group under one HA **device**
+  `_attr_device_info`, so all five entities group under one HA **device**
   representing the vehicle itself (identified by VIN, manufacturer/model
   from the device detail's `info` object) — this is the actual point of
   the integration ("the car should appear as a device", not five loose
@@ -173,6 +173,55 @@ and the modern `entry.runtime_data` pattern (a typed
   because its "device" is a cloud account; ours is a physical vehicle, so
   it should register as a regular device, not get folded into HA's
   "services" bucket.
+
+## Entity identity matched to `homeassistant-volkswagencarnet`, not invented fresh
+
+2026-08-22: entity names, icons, units, device classes, and even entity
+*type* (sensor vs. binary_sensor) were changed to match the equivalent
+entity in `robinostlund/homeassistant-volkswagencarnet` (backed by the
+`volkswagencarnet` PyPI package's `vw_dashboard.py`, which defines every
+instrument as `(EntityClass, [], {"attr": ..., "name": ..., "icon": ...,
+"unit": ..., "device_class": ..., "state_class": ...})` tuples). Reasoning:
+this project exists specifically as a fallback data source for the same
+underlying question ("what's my VW doing") that `volkswagencarnet` answers
+when it isn't blocked (see `docs/CONTEXT.md` §1) — matching identity means
+a user's dashboards/automations/history graphs built against one keep
+working (or need only a device swap, not an entity rewrite) if they ever
+switch between the two, or run both and want consistent naming.
+
+Comparison table (VW Connect's `attr` is its internal instrument key, not
+user-visible — the `name` column is what actually matters for this match):
+
+| Tibber capability | VW Connect `attr` | Matched name | Icon | Unit | device_class | state_class | Entity type |
+|---|---|---|---|---|---|---|---|
+| `storage.stateOfCharge` | `battery_level` | Battery level | `mdi:battery` | % | `battery` | `measurement` | sensor |
+| `storage.targetStateOfCharge` | `battery_target_charge_level` | Battery target charge level | `mdi:battery-arrow-up` | % | `battery` | — | sensor |
+| `range.remaining` | `electric_range` | Electric range | `mdi:car-electric` | km | `distance` | `measurement` | sensor |
+| `connector.status` | `external_power` | External power | (device_class default) | — | `power` | — | **binary_sensor** |
+| `charging.status` | `charging_state` | Charging state | `mdi:car-turbocharger` | — | — | — | sensor |
+
+Notes on the two places this isn't a blind 1:1 copy:
+- **`range.remaining` → `electric_range`, not `battery_cruising_range`.**
+  VW Connect has both; `electric_range` ("Electric range") is the direct
+  semantic match to Tibber's own field description ("estimated remaining
+  driving range"), `battery_cruising_range` looks like a secondary/derived
+  value in VW's own model.
+- **`storage.targetStateOfCharge` stays a `sensor`, not VW's newer
+  `Number` entity.** VW Connect has *both* a plain `Sensor` and a writable
+  `Number` for the same `attr` (the latter added later, for
+  vehicles/regions where VW's API accepts writes). Tibber's Data API is
+  confirmed read-only (`docs/CONTEXT.md` §3) — offering a `Number` entity
+  a user could try to drag/type into, with the write silently doing
+  nothing, would be actively misleading. The plain-`Sensor` metadata
+  (name/icon/unit/device_class) is what's matched here, not the `Number`
+  entity's.
+- **`connector.status` became a `binary_sensor`, matching VW Connect's
+  actual entity type** (`external_power`, device_class `power`) — not kept
+  as a generic string sensor the way it started. Tibber's third possible
+  value (`"unknown"`, alongside `connected`/`disconnected`) maps to
+  `is_on` returning `None`, which HA's binary_sensor renders as
+  unavailable/unknown state — no information is lost by using a proper
+  binary_sensor instead of a string.
 
 **Verification done:** every module import-checked against a real
 `homeassistant` pip install (Python 3.14, matching `weconnect_mvp`'s own

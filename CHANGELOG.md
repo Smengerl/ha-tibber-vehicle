@@ -8,6 +8,19 @@ that level of detail instead of writing it out here.
 
 ## [Unreleased]
 
+### Changed
+- All entity names, icons, units, and device classes now match the
+  equivalent entity in `robinostlund/homeassistant-volkswagencarnet`
+  (Battery level, Battery target charge level, Electric range, External
+  power, Charging state) instead of the generic placeholder names from
+  the initial implementation — so dashboards/history built against either
+  integration use consistent entity identity. The plug-status entity
+  (`connector.status`) also changed **type**, from a plain sensor to a
+  `binary_sensor` (device_class `power`), matching VW Connect's own
+  `external_power` entity. Full comparison table and reasoning (including
+  the two deliberate deviations from a blind 1:1 copy) in
+  `docs/DECISIONS.md`.
+
 ### Fixed
 - `README.md` step 1 didn't say to give the Tibber OAuth2 client a
   recognizable name. Added: that name is what Tibber's own consent screen
