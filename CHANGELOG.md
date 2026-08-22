@@ -16,6 +16,10 @@ that level of detail instead of writing it out here.
   Application Credential form only labels HA's local "pick implementation"
   step and is never sent to Tibber. Easy to mix the two up; a prior version
   of this guidance (given in chat, not yet written down) had it backwards.
+- `README.md` step 3 now also covers the complementary point: the optional
+  "Name" field on HA's own Application Credential form is purely local to
+  Home Assistant (only matters if a second Tibber credential is ever
+  added), so something like `Tibber Vehicle` is fine there.
 
 ### Changed
 - The GitHub repository was switched from private to public (2026-08-22).

@@ -92,7 +92,11 @@ becomes fully known to HA (selectable anywhere in its UI) after a restart.
 
 Settings → Devices & Services → **Application Credentials** ("OAuth
 Anmeldedaten" in the German UI) → Add application credential → select
-**Tibber Vehicle** → enter the client ID/secret from step 1.
+**Tibber Vehicle** → enter the client ID/secret from step 1. The optional
+"Name" field here is separate from step 1's client name — it's used
+exclusively inside Home Assistant itself (only shown back to you if you
+ever add a second Tibber credential and have to tell them apart), never
+sent to Tibber. Something like `Tibber Vehicle` is a fine choice.
 
 This has to happen *after* step 2, not before — the integration dropdown
 here only lists domains HA currently has installed and loaded, so "Tibber
