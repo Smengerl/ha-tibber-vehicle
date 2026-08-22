@@ -3,6 +3,10 @@
 [![Validate](https://github.com/Smengerl/ha-tibber-vehicle/actions/workflows/validate.yml/badge.svg)](https://github.com/Smengerl/ha-tibber-vehicle/actions/workflows/validate.yml)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+<!-- Sourced from Home Assistant's own opt-in analytics (https://analytics.home-assistant.io/custom_integrations.json),
+     rendered live by shields.io's dynamic JSON badge. Will show 0/invalid until other users install this and have
+     Settings > System > Analytics enabled on their own instance - that's expected for a newly-public repo, not a bug. -->
+[![Active Installations](https://img.shields.io/badge/dynamic/json?url=https://analytics.home-assistant.io/custom_integrations.json&query=$.tibber_vehicle.total&label=Active%20Installations&color=41BDF5&logo=home-assistant&logoColor=white)](https://analytics.home-assistant.io/custom_integrations.json)
 
 A Home Assistant integration that reads your EV's charge state, range, and
 plug status from the official [Tibber Data API](https://data-api.tibber.com)

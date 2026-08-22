@@ -8,6 +8,13 @@ that level of detail instead of writing it out here.
 
 ## [Unreleased]
 
+### Added
+- "Active Installations" badge in `README.md`, sourced live from Home
+  Assistant's own opt-in analytics
+  (`analytics.home-assistant.io/custom_integrations.json`) via shields.io's
+  dynamic JSON badge. Will read 0/invalid until other users install this
+  and have analytics reporting enabled — expected for a newly-public repo.
+
 ### Fixed
 - Confirmed working end-to-end on a real Home Assistant instance
   (2026-08-23): OAuth2 login against Tibber, vehicle resolution, and all
