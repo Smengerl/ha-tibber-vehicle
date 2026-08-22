@@ -28,6 +28,14 @@ that level of detail instead of writing it out here.
   (2026-08-23): OAuth2 login against Tibber, vehicle resolution, and all
   five entities populating correctly. Removed the "not yet verified"
   status note from `README.md` accordingly.
+- The CI "Validate" workflow had been failing on every single push since
+  the first commit (`hacs/action`'s brands check — fixed by the local
+  brand assets above). Also fixed: `manifest.json`'s
+  `codeowners`/`documentation`/`issue_tracker` and `const.py`'s
+  `USER_AGENT` all pointed to `github.com/simongerlach` instead of the
+  actual repo owner `Smengerl` — broken links, and an inaccurate
+  User-Agent sent on every Tibber API request. Both found and fixed while
+  checking overall HACS-readiness; CI is green as of this entry.
 
 ### Changed
 - Restructured `README.md` to follow common HA-integration conventions:
