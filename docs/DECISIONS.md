@@ -263,13 +263,34 @@ v1:**
 ## `DataUpdateCoordinator` for polling, refresh-token-only at runtime
 
 Standard HA pattern: one `DataUpdateCoordinator` per config entry, polling
-`GET /v1/homes/{homeId}/devices/{deviceId}` on an interval (TBD, but should
-respect Tibber's rate-limiting guidance — see `docs/CONTEXT.md` §3) using
-only non-interactive refresh-token exchange. This mirrors the separation
+`GET /v1/homes/{homeId}/devices/{deviceId}` on an interval (`const.
+DEFAULT_UPDATE_INTERVAL_SECONDS = 300`, i.e. 5 minutes) using only
+non-interactive refresh-token exchange. This mirrors the separation
 `tibber_client.py`'s `TokenStore` already has between one-time interactive
 login and ongoing refresh — HA's OAuth2 session helper
 (`OAuth2Session`) gives this for free once the Application Credential /
 config flow above is wired up.
+
+**Polling is confirmed the only option, not just the convenient default.**
+2026-08-22: downloaded and searched the full Tibber Data API OpenAPI spec
+(`https://data-api.tibber.com/openapi/v1.json`) after Simon observed the
+visible update cadence looking closer to ~10 minutes than the configured
+5. Two findings, now recorded in `weconnect_mvp`'s `TIBBER_API.md` session
+log as the durable source (not duplicated in full here):
+- The API's only push/SSE mechanism (`GET /homes/{homeId}/live-events`)
+  is scoped to metering hardware only (Pulse CT clamps / Bridge-attached
+  Pulses) per `GET .../live-events/devices`'s own description — vehicles
+  are never mentioned. There is no non-polling way to read vehicle data
+  from this API at all.
+- The spec documents **no** refresh interval, rate limit, or recommended
+  client polling cadence anywhere (exhaustive keyword search across the
+  whole spec text came back empty). The observed ~10-minute effective
+  cadence is most likely `status.lastSeen`/the underlying value simply not
+  changing between every 5-minute poll (Tibber's own backend refresh
+  against Enode/VW happens on some undocumented schedule we can't see or
+  tune against) — not a bug in this integration's polling. Tightening
+  `DEFAULT_UPDATE_INTERVAL_SECONDS` below 5 minutes would not be tuning
+  against any documented ceiling; there isn't one to tune against.
 
 ## Sensor entities map 1:1 to Tibber's capability ids
 
