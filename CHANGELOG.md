@@ -9,6 +9,12 @@ that level of detail instead of writing it out here.
 ## [Unreleased]
 
 ### Changed
+- Restructured `README.md` to follow common HA-integration conventions:
+  badges (CI status, HACS, license), a short motivation paragraph, a
+  screenshot placeholder (`docs/images/screenshot.svg` — replace with a
+  real one once verified live), a dedicated Prerequisites section, and
+  "Open your Home Assistant instance" buttons for both the HACS
+  repository (step 2) and starting the config flow directly (step 4).
 - Entity names, icons, units, and device classes now match the equivalent
   entity in `robinostlund/homeassistant-volkswagencarnet` (Battery level,
   Battery target charge level, Electric range, Charging state) instead of

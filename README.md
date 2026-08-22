@@ -1,56 +1,48 @@
-# ha-tibber-vehicle
+# Tibber Vehicle
 
-A Home Assistant custom integration (installable via HACS) that reads EV
-vehicle data — state of charge, target SoC, estimated range, plug status,
-charging status — from the official [Tibber Data API](https://data-api.tibber.com)
-(`data-api.tibber.com`), for any vehicle paired inside a Tibber account.
+[![Validate](https://github.com/Smengerl/ha-tibber-vehicle/actions/workflows/validate.yml/badge.svg)](https://github.com/Smengerl/ha-tibber-vehicle/actions/workflows/validate.yml)
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Status: login flow implemented, not yet verified end-to-end.** The full
-OAuth2 login (steps 1–4 below), vehicle resolution, polling, and the five
-sensor entities are all implemented, modeled on Home Assistant core's
-Spotify integration — see [`docs/DECISIONS.md`](docs/DECISIONS.md)'s "Login
-flow implementation" for exactly what and how. Every module has been
-import-checked against a real `homeassistant` install, but there has been
-**no live OAuth2 round-trip against Tibber yet and no boot inside an actual
-HA instance** — treat this as "should work" rather than "confirmed
-working" until that verification happens. Known, deliberately deferred
-gaps: no PKCE, no reauth flow, no multi-vehicle support (first vehicle
-found wins) — see `docs/DECISIONS.md` for why none of these block a
-working single-vehicle login. See [`docs/CONTEXT.md`](docs/CONTEXT.md) for
-the full background.
+A Home Assistant integration that reads your EV's charge state, range, and
+plug status from the official [Tibber Data API](https://data-api.tibber.com)
+— for any vehicle paired inside your Tibber account, regardless of make.
 
 ## Why this exists
 
 Home Assistant's usual route to Volkswagen-group vehicle data (the
-[`robinostlund/homeassistant-volkswagencarnet`](https://github.com/robinostlund/homeassistant-volkswagencarnet)
+[`homeassistant-volkswagencarnet`](https://github.com/robinostlund/homeassistant-volkswagencarnet)
 integration) is currently broken — Volkswagen closed third-party access to
-its backend auth (see repo's pinned issue
-[#989](https://github.com/robinostlund/homeassistant-volkswagencarnet/issues/989)).
-Tibber is an official VW integration partner and exposes vehicle data paired
-inside a user's Tibber account through its own public, documented, OAuth2
-Data API — a sanctioned alternative read-only path. Full background in
-[`docs/CONTEXT.md`](docs/CONTEXT.md).
+its backend auth. Tibber is an official VW integration partner and already
+exposes the vehicle data paired inside your Tibber account through its own
+public, documented OAuth2 API. This integration reads that data and turns
+it into a Home Assistant device with sensor entities, so you get your
+car's charge state back into your dashboards and automations without
+depending on VW's own, currently-unreliable API access.
 
-This project is **independent of** `weconnect_mvp` (a separate MCP-server
-project on this machine that hit the same VW block and has its own,
-further-along Tibber OAuth2 proof-of-concept — see
-[`docs/CONTEXT.md`](docs/CONTEXT.md) for how the two relate and what this
-repo reuses from it).
+> [!NOTE]
+> **Status: login flow implemented, not yet verified end-to-end.** Every
+> module has been import-checked against a real `homeassistant` install,
+> but there has been no live OAuth2 round-trip against Tibber yet and no
+> boot inside an actual HA instance — treat this as "should work" rather
+> than "confirmed working" until that verification happens. See
+> [`docs/DECISIONS.md`](docs/DECISIONS.md) for exactly what's implemented
+> and the known, deliberately deferred gaps (no PKCE, no reauth flow, no
+> multi-vehicle support).
+
+![Tibber Vehicle device with its entities in Home Assistant](docs/images/screenshot.svg)
+<!-- TODO: replace docs/images/screenshot.svg with a real screenshot (PNG) of the Tibber Vehicle device once the integration has been verified end-to-end against a live vehicle. -->
 
 ## What it exposes
 
 Per paired vehicle, 5 entities — this is the *complete* data surface the
 Tibber Data API offers for vehicles, confirmed by direct inspection of its
 OpenAPI schema (no doors/climate/position/lock data exists in this API at
-all). Name, icon, unit, and device class are matched to the equivalent
-entity in the `robinostlund/homeassistant-volkswagencarnet` integration
-(the direct-VW route this project is a fallback for) wherever that makes
-sense, so switching between the two — or running both side by side —
-shows consistent entity identity rather than two differently-named things
-for the same data. One deliberate exception: `connector.status` stays a
-plain sensor here rather than VW Connect's `binary_sensor`, so all three
-of Tibber's actual values (connected/disconnected/unknown) stay directly
-visible. Full comparison and reasoning in
+all, and no write/control support is possible either). Name, icon, unit,
+and device class are matched to the equivalent entity in
+`homeassistant-volkswagencarnet` wherever that makes sense, so switching
+between the two — or running both side by side — shows consistent entity
+identity. Full comparison and reasoning in
 [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
 | Entity | Type | Tibber capability id | Unit / device class |
@@ -61,8 +53,14 @@ visible. Full comparison and reasoning in
 | Plug status | sensor | `connector.status` | — |
 | Charging state | sensor | `charging.status` | — |
 
-No write/control support is possible — the Tibber Data API is read-only
-(confirmed: only `GET` endpoints exist in its schema).
+## Prerequisites
+
+- A **Tibber account** (the free tier is sufficient — no energy contract
+  required).
+- A **vehicle already paired inside the Tibber app** (Tibber's own
+  vehicle-pairing flow, independent of Home Assistant).
+- **Home Assistant** with [HACS](https://hacs.xyz) installed, version
+  2024.1.0 or newer.
 
 ## Installation & setup
 
@@ -79,23 +77,25 @@ log in with your Tibber account, and create a new client:
   credentials apart, and is never sent to Tibber).
 - Scopes: select at least `data-api-homes-read` and `data-api-vehicles-read`.
 - Redirect URI: enter exactly **`https://my.home-assistant.io/redirect/oauth`**
-  — not your own instance's address, even if (like the primary target
-  instance for this integration) it's LAN-only with no public URL. This is
-  Home Assistant's standard shared redirect page for OAuth2 account
-  linking; the actual trip back to your instance happens entirely in your
-  browser, so it works regardless of whether your instance is reachable
-  from the internet. Full mechanism traced from HA's own source code in
-  [`docs/DECISIONS.md`](docs/DECISIONS.md).
+  — not your own instance's address, even if it's LAN-only with no public
+  URL. This is Home Assistant's standard shared redirect page for OAuth2
+  account linking; the actual trip back to your instance happens entirely
+  in your browser, so it works regardless of whether your instance is
+  reachable from the internet. Full mechanism traced from HA's own source
+  code in [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
 Note down the client ID and secret shown after creation — the secret is
 only displayed once.
 
 ### 2. Install via HACS
 
-In HACS on your Home Assistant instance: **⋮ → Custom repositories** → add
-this repo's URL, category "Integration". Then install **Tibber Vehicle**
-from the store and **restart Home Assistant** — a first install only
-becomes fully known to HA (selectable anywhere in its UI) after a restart.
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Smengerl&repository=ha-tibber-vehicle&category=integration)
+
+Or manually: **HACS → ⋮ → Custom repositories** → add
+`https://github.com/Smengerl/ha-tibber-vehicle`, category "Integration".
+Then install **Tibber Vehicle** from the store and **restart Home
+Assistant** — a first install only becomes fully known to HA (selectable
+anywhere in its UI) after a restart.
 
 ### 3. Add the Application Credential
 
@@ -113,10 +113,13 @@ Vehicle" isn't selectable until the HACS install (+ restart) has completed.
 
 ### 4. Add the integration
 
-Settings → Devices & Services → Add Integration → **Tibber Vehicle** → this
-picks up the credential from step 3 and takes you straight to the OAuth2
-consent screen in your browser. Approve access, and the integration
-resolves your paired vehicle(s) and creates their sensor entities.
+[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=tibber_vehicle)
+
+Or manually: Settings → Devices & Services → Add Integration → **Tibber
+Vehicle**. Either way, this picks up the credential from step 3 and takes
+you straight to the OAuth2 consent screen in your browser. Approve access,
+and the integration resolves your paired vehicle and creates its device
+with the entities listed above.
 
 ## Development
 
@@ -125,6 +128,9 @@ See [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) for the dev/test workflow
 `pytest-homeassistant-custom-component` for unit tests → releasing a change
 to the real instance) and [`CONTRIBUTING.md`](CONTRIBUTING.md) if you want
 to contribute.
+
+Background on why this project exists and how it relates to sibling
+projects on the same machine is in [`docs/CONTEXT.md`](docs/CONTEXT.md).
 
 ## License
 
