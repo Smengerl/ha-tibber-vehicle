@@ -65,6 +65,50 @@ following it.
   one. Surface that you think a change is major-sized if genuinely
   relevant, but the decision to actually bump stays with the user.
 
+## HA Integration Quality Scale — the bar to measure code against
+
+Home Assistant's official [Integration Quality Scale checklist](https://developers.home-assistant.io/docs/core/integration-quality-scale/checklist)
+is the reference used for the pre-1.0.0 review (2026-08-24) and should be
+the standard yardstick going forward — not just a one-time audit. **When
+writing or reviewing code in this repo, check it against Bronze at
+minimum, and proactively tell the user when a change introduces a gap
+against any tier (a regression on something previously passing, or an
+easy win left on the table) rather than noting it silently and moving on.**
+
+### Bronze (the bar this integration should always meet)
+
+| Rule | Requirement | Status as of 2026-08-24 |
+|---|---|---|
+| `action-setup` | Service actions registered in `async_setup` | N/A — no service actions |
+| `appropriate-polling` | Reasonable polling interval | ✅ 5 min (`DEFAULT_UPDATE_INTERVAL_SECONDS`); no documented Tibber-side cadence to tune against, see `docs/DECISIONS.md` |
+| `brands` | Branding assets available | ✅ local `custom_components/tibber_vehicle/brand/` |
+| `common-modules` | No duplicated logic across modules | ✅ |
+| `config-flow-test-coverage` | Full test coverage for the config flow | ❌ **zero test files exist** — `tests/` only has fixture scaffolding, no actual tests. Biggest open gap. |
+| `config-flow` | Set up via UI, correct `ConfigEntry` data/options use | ✅ |
+| `dependency-transparency` | External deps documented | ✅ — none beyond aiohttp (bundled with HA) |
+| `docs-actions`/`docs-triggers`/`docs-conditions` | Document provided actions/triggers/conditions | N/A — none provided |
+| `docs-high-level-description` | Explain the brand/service being integrated | ✅ README intro paragraph (restructured 2026-08-23 to match common HA-integration README conventions; no longer a dedicated "Why this exists" heading) |
+| `docs-installation-instructions` | Step-by-step install docs | ✅ README "Installation" + "Setup" (split 2026-08-23 from the former single "Installation & setup" section) |
+| `docs-removal-instructions` | Removal docs | ✅ README "Removal" (added 2026-08-24, was missing before) |
+| `entity-event-setup` | Entity subscriptions at the right lifecycle phase | N/A — coordinator polling, not event-driven |
+| `entity-unique-id` | Entities have a unique ID | ✅ |
+| `has-entity-name` | `_attr_has_entity_name = True` | ✅ (`entity.py`) |
+| `runtime-data` | Use `ConfigEntry.runtime_data` | ✅ |
+| `test-before-configure` | Validate connectivity before finishing setup | ✅ logically (the vehicle-list call in `async_oauth_create_entry` aborts on failure) — but untested, see `config-flow-test-coverage` |
+| `test-before-setup` | Verify init works before completing setup | ✅ logically (`async_config_entry_first_refresh` raises `ConfigEntryNotReady` on failure) — same test-coverage caveat |
+| `unique-config-entry` | Can't set up the same account twice | ✅ `_abort_if_unique_id_configured()` keyed on home ids |
+
+### Silver / Gold (aspirational — not required for v1.0.0, but worth knowing what's deliberately deferred)
+
+Full lists in the checklist linked above. Relevant ones already tracked as
+deliberate, documented scope boundaries in `docs/DECISIONS.md`: no reauth
+flow, no PKCE, no live dynamic-device addition (a vehicle paired in Tibber
+after setup needs a reload). Not yet done and not yet decided either way:
+`diagnostics.py`, entity/icon translations, a linter/`pyproject.toml`
+config. Don't silently start building toward these — if one comes up
+naturally, mention it and let the user decide whether it's worth doing now
+or staying deferred, same as any other scope decision in this repo.
+
 ## Before starting new work in this repo
 
 Read `docs/CONTEXT.md` and `docs/DECISIONS.md` first. If something you're
