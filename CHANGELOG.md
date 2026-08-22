@@ -6,7 +6,15 @@ describe what changed for someone installing/using this integration, not a
 full technical walkthrough of every commit — link the actual commit/PR for
 that level of detail instead of writing it out here.
 
-## [Unreleased]
+## [1.0.0] - 2026-08-25
+
+First stable release. Reads battery level, target charge level, electric
+range, plug status, and charging state from any vehicle paired inside a
+Tibber account, via Tibber's official OAuth2 Data API — a working
+alternative for Volkswagen Group vehicles (VW, Audi, Cupra, Seat, Skoda)
+now that direct third-party access to VW's own backend is blocked. See
+`README.md` for the full setup walkthrough and `docs/DECISIONS.md` for
+the design reasoning behind every choice below.
 
 ### Added
 - Initial release: log in with your Tibber account once, and every vehicle
