@@ -37,6 +37,34 @@ the old text if it had reasoning attached. Either:
 Never leave a doc describing a decision or state that the code has since
 moved away from — an inaccurate `docs/DECISIONS.md` is worse than none.
 
+## Release & versioning policy
+
+Version format: `major.minor.bugfix` (`custom_components/tibber_vehicle/manifest.json`'s
+`"version"` field and git tags — see `docs/DEVELOPMENT.md`'s "Versioning"
+section for the mechanics of actually bumping/tagging). This section is
+the *policy* for which number to bump and whether to ask first; treat it
+the same as the rest of this file — don't bump a version without
+following it.
+
+- **Bugfix** (the third number): a single, small fix — typically one
+  commit's worth of change. No `CHANGELOG.md` entry is required for what a
+  bugfix bump actually contains. **Always ask the user before bumping** —
+  per commit, confirm whether *this* commit should increment the bugfix
+  number. Never bump it unasked.
+- **Minor** (the second number): used whenever a new feature is
+  introduced. Gets a brief `CHANGELOG.md` entry under the new version
+  heading — concise, not the full commit-level detail. If it's unclear
+  whether a change is substantial enough to warrant a minor bump (versus
+  staying within an unbumped bugfix-level change), **ask the user for
+  confirmation** rather than deciding unilaterally.
+- **Major** (the first number): comprehensive changes — gets a thorough
+  `CHANGELOG.md` entry, more detail than a minor bump's. **Only the user
+  bumps major, and only at their own explicit request.** Don't propose,
+  suggest, or perform a major version bump on your own initiative under
+  any circumstance — not even if a change seems large enough to warrant
+  one. Surface that you think a change is major-sized if genuinely
+  relevant, but the decision to actually bump stays with the user.
+
 ## Before starting new work in this repo
 
 Read `docs/CONTEXT.md` and `docs/DECISIONS.md` first. If something you're

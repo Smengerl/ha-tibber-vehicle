@@ -56,10 +56,13 @@ already has the integration installed:
 
 ## 4. Versioning
 
-Standard semantic-version git tags (`v0.1.0`, `v0.2.0`, …). Keep
+Mechanics only — for the policy on *which* number to bump, whether a
+`CHANGELOG.md` entry is needed, and when to ask the user first, see
+`CLAUDE.md`'s "Release & versioning policy".
+
+Standard `major.minor.bugfix` git tags (`v0.1.0`, `v0.1.1`, …). Keep
 `custom_components/tibber_vehicle/manifest.json`'s `"version"` field in sync
-with the tag being released. Record notable changes in `CHANGELOG.md`
-(Keep a Changelog format) before tagging.
+with the tag being released.
 
 ## 5. CI
 
