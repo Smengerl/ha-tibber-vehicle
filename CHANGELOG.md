@@ -13,7 +13,8 @@ that level of detail instead of writing it out here.
   the actual device page (no more surrounding browser chrome). Added two
   more screenshots showing what an entity's history looks like — a
   graph for `battery_level` and a state timeline for `plug_status` — next
-  to their respective entity descriptions.
+  to their respective entity descriptions. Displayed at a fixed, moderate
+  width rather than stretched to the full README column.
 
 ## [1.0.0] - 2026-08-25
 

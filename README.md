@@ -21,7 +21,8 @@ it exposes exactly the five values Tibber's API makes available for
 vehicles — nothing more (no doors, climate, position, or lock data; see
 [Known Issues / Limitations](#known-issues--limitations)).
 
-![Tibber Vehicle device page, showing all five entities plus recent activity](docs/images/screenshot-overview.png)
+<img src="docs/images/screenshot-overview.png" width="720" alt="Tibber Vehicle device page, showing all five entities plus recent activity">
+
 _A vehicle's device page in Home Assistant, right after setup._
 
 ## Prerequisites
@@ -147,7 +148,8 @@ The vehicle's current state of charge, as a percentage.
 Tibber capability: `storage.stateOfCharge`  
 Unit / device class: `%`, `battery`, measurement
 
-![Battery level entity's history graph](docs/images/screenshot-battery-history.png)
+<img src="docs/images/screenshot-battery-history.png" width="420" alt="Battery level entity's history graph">
+
 _State of charge over time — one of Home Assistant's built-in statistics
 graphs, available for any sensor with a `state_class` (see the "measurement"
 entries in the entity list above)._
@@ -179,7 +181,8 @@ _Stays a plain sensor here rather than a `binary_sensor` (unlike VW
 Connect's equivalent) so all three values stay directly visible — see
 [`docs/DECISIONS.md`][decisions-entities]._
 
-![Plug status entity's history, shown as a timeline](docs/images/screenshot-plug-history.png)
+<img src="docs/images/screenshot-plug-history.png" width="420" alt="Plug status entity's history, shown as a timeline">
+
 _Plug status doesn't have a numeric `state_class`, so Home Assistant shows
 its history as a state timeline instead of a graph — connected/disconnected/
 unknown segments over time._
