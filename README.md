@@ -21,7 +21,8 @@ it exposes exactly the five values Tibber's API makes available for
 vehicles — nothing more (no doors, climate, position, or lock data; see
 [Known Issues / Limitations](#known-issues--limitations)).
 
-![Tibber Vehicle device with its entities in Home Assistant](docs/images/screenshot.png)
+![Tibber Vehicle device page, showing all five entities plus recent activity](docs/images/screenshot-overview.png)
+_A vehicle's device page in Home Assistant, right after setup._
 
 ## Prerequisites
 
@@ -146,6 +147,11 @@ The vehicle's current state of charge, as a percentage.
 Tibber capability: `storage.stateOfCharge`  
 Unit / device class: `%`, `battery`, measurement
 
+![Battery level entity's history graph](docs/images/screenshot-battery-history.png)
+_State of charge over time — one of Home Assistant's built-in statistics
+graphs, available for any sensor with a `state_class` (see the "measurement"
+entries in the entity list above)._
+
 ### `sensor.<vehicle_name>_battery_target_charge_level`
 
 The charge level the vehicle is set to stop charging at, as a percentage.
@@ -172,6 +178,11 @@ Tibber capability: `connector.status`
 _Stays a plain sensor here rather than a `binary_sensor` (unlike VW
 Connect's equivalent) so all three values stay directly visible — see
 [`docs/DECISIONS.md`][decisions-entities]._
+
+![Plug status entity's history, shown as a timeline](docs/images/screenshot-plug-history.png)
+_Plug status doesn't have a numeric `state_class`, so Home Assistant shows
+its history as a state timeline instead of a graph — connected/disconnected/
+unknown segments over time._
 
 ### `sensor.<vehicle_name>_charging_state`
 

@@ -6,6 +6,15 @@ describe what changed for someone installing/using this integration, not a
 full technical walkthrough of every commit — link the actual commit/PR for
 that level of detail instead of writing it out here.
 
+## [Unreleased]
+
+### Changed
+- Replaced the placeholder README screenshot with a real one, cropped to
+  the actual device page (no more surrounding browser chrome). Added two
+  more screenshots showing what an entity's history looks like — a
+  graph for `battery_level` and a state timeline for `plug_status` — next
+  to their respective entity descriptions.
+
 ## [1.0.0] - 2026-08-25
 
 First stable release. Reads battery level, target charge level, electric
