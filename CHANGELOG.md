@@ -6,7 +6,7 @@ describe what changed for someone installing/using this integration, not a
 full technical walkthrough of every commit — link the actual commit/PR for
 that level of detail instead of writing it out here.
 
-## [Unreleased]
+## [1.0.1] - 2026-08-24
 
 ### Changed
 - Replaced the placeholder README screenshot with a real one, cropped to
