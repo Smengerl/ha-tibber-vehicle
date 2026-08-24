@@ -65,6 +65,29 @@ following it.
   one. Surface that you think a change is major-sized if genuinely
   relevant, but the decision to actually bump stays with the user.
 
+**Publishing to HACS users requires an actual git tag + GitHub Release —
+a manifest.json version bump alone does nothing.** HACS discovers
+installable versions by reading this repo's GitHub Releases, not its
+commit history or the `version` field in isolation. So "releasing" a
+version to the HACS user community (i.e. making it the version people
+get when they install/update through HACS) means:
+1. Bump `manifest.json`'s `"version"` to match.
+2. Add/rename the `CHANGELOG.md` heading for that version.
+3. Commit, then create a git tag matching the version (e.g. `v1.0.1`,
+   lightweight — see `git cat-file -t v1.0.0`) and push it.
+4. Create an actual GitHub Release for that tag (`gh release create`,
+   with hand-written notes, not auto-generated) — HACS/end users see the
+   Release, not the bare tag.
+5. Confirm CI is green on the tagged commit.
+
+This is a one-time-per-version step, not a one-time-per-repo step: every
+future version bump that should reach HACS users needs its own tag +
+Release, following the same versioning policy above for which number to
+bump and when to ask. (Separately, getting this repo *listed* in HACS's
+default store — `hacs/default` — is a one-time submission; once merged,
+HACS reads all future Releases from this repo automatically, no repeat
+submission needed.)
+
 ## HA Integration Quality Scale — the bar to measure code against
 
 Home Assistant's official [Integration Quality Scale checklist](https://developers.home-assistant.io/docs/core/integration-quality-scale/checklist)
