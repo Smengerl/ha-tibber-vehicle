@@ -8,10 +8,10 @@ import time
 
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
-
-from custom_components.tibber_vehicle.const import DOMAIN
 from pytest_homeassistant_custom_component.common import MockConfigEntry, load_fixture
 from pytest_homeassistant_custom_component.test_util.aiohttp import AiohttpClientMocker
+
+from custom_components.tibber_vehicle.const import DOMAIN
 
 TOKEN_URL = "https://thewall.tibber.com/connect/token"
 HOMES_URL = "https://data-api.tibber.com/v1/homes"

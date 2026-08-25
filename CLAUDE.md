@@ -77,8 +77,20 @@ get when they install/update through HACS) means:
    lightweight — see `git cat-file -t v1.0.0`) and push it.
 4. Create an actual GitHub Release for that tag (`gh release create`,
    with hand-written notes, not auto-generated) — HACS/end users see the
-   Release, not the bare tag.
-5. Confirm CI is green on the tagged commit.
+   Release, not the bare tag. Publishing the Release fires
+   `.github/workflows/release.yml` (trigger: `release: types: [published]`,
+   *not* the tag push itself — it only runs once the Release exists) —
+   it re-verifies `manifest.json`'s version against the tag and, if they
+   match, zips `custom_components/tibber_vehicle/` and attaches it to the
+   Release as `tibber_vehicle.zip`. Purely a convenience download for
+   manual (non-HACS) installs — HACS itself installs from the repo source
+   at the tag, not from this asset. If the workflow's version-check fails
+   (job goes red), the Release is already public with a mismatched
+   manifest — fix by pushing a corrected commit and re-running the
+   workflow (`gh workflow run release.yml` or re-publish), don't just
+   ignore the red run.
+5. Confirm CI is green on the tagged commit, including the `release.yml`
+   run triggered by step 4.
 
 This is a one-time-per-version step, not a one-time-per-repo step: every
 future version bump that should reach HACS users needs its own tag +
@@ -154,7 +166,7 @@ this applies even to Gold, since "optional" means "not required", not
 | `log-when-unavailable` | Log when a connection is lost/restored | 🟡 not explicitly implemented in this integration's own code — relies entirely on `DataUpdateCoordinator`'s built-in logging, never verified that it actually covers this |
 | `parallel-updates` | `PARALLEL_UPDATES` specified | ✅ `sensor.py`, set to `0` (coordinator-driven, no per-entity I/O to throttle) |
 | `reauthentication-flow` | Reauthentication available via the UI | ❌ known, deliberately deferred gap — see `docs/DECISIONS.md`'s "Login flow implementation" |
-| `test-coverage` | Above 95% test coverage | ❌ not measured — 20 tests exist (`docs/TESTING.md`'s full planned case list, all passing), but coverage % has never actually been run/checked |
+| `test-coverage` | Above 95% test coverage | ✅ **closed 2026-08-25** — measured at 98% (`pytest --cov`) when the coverage-reporting CI job was added; gated at `--cov-fail-under=95` in `.github/workflows/validate.yml`'s `pytest` job so a regression below the 95% target fails CI, not just a silent drop |
 
 ### Gold (optional — nice-to-have at most, don't invest effort unasked)
 
@@ -189,9 +201,11 @@ status kept for this tier; not part of the current policy.
 
 ### CI must stay green — always, especially the `hacs` job
 
-`.github/workflows/validate.yml`'s three jobs (`hassfest`, `hacs`,
-`pytest`) must all pass on every push. Treat a red run as a blocker to fix
-in the same change, not something to notice in passing and defer. The
+`.github/workflows/validate.yml`'s four jobs (`hassfest`, `hacs`, `lint`,
+`pytest`) must all pass on every push, and `.github/workflows/release.yml`
+(triggered separately by `release: published`, see "Publishing to HACS
+users" above) must pass on every Release. Treat a red run as a blocker to
+fix in the same change, not something to notice in passing and defer. The
 `hacs` job specifically runs `hacs/action`'s full validation — 9 checks
 (topics, description, license, archived status, issues, repository
 information, `hacs.json`, `manifest.json`, brand assets) — and that's not

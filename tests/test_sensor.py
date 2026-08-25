@@ -8,11 +8,12 @@ import json
 import time
 
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr, entity_registry as er
-
-from custom_components.tibber_vehicle.const import DOMAIN
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry, load_fixture
 from pytest_homeassistant_custom_component.test_util.aiohttp import AiohttpClientMocker
+
+from custom_components.tibber_vehicle.const import DOMAIN
 
 HOMES_URL = "https://data-api.tibber.com/v1/homes"
 DEVICES_URL = f"{HOMES_URL}/home-1/devices"

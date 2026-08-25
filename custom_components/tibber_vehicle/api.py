@@ -17,8 +17,8 @@ which mean "fix the request", not "try again".
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Awaitable, Callable
 import random
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 from aiohttp import ClientSession, ClientTimeout

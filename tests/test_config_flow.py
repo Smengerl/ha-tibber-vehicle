@@ -14,16 +14,15 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, patch
 
 import pytest
-
 from homeassistant.config_entries import SOURCE_USER
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers import config_entry_oauth2_flow
-
-from custom_components.tibber_vehicle.const import DOMAIN
 from pytest_homeassistant_custom_component.common import MockConfigEntry, load_fixture
 from pytest_homeassistant_custom_component.test_util.aiohttp import AiohttpClientMocker
 from pytest_homeassistant_custom_component.typing import ClientSessionGenerator
+
+from custom_components.tibber_vehicle.const import DOMAIN
 
 TOKEN_URL = "https://thewall.tibber.com/connect/token"
 HOMES_URL = "https://data-api.tibber.com/v1/homes"
