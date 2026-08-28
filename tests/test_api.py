@@ -9,19 +9,18 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, patch
 
 import pytest
-
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from pytest_homeassistant_custom_component.common import load_fixture
+from pytest_homeassistant_custom_component.test_util.aiohttp import (
+    AiohttpClientMocker,
+    AiohttpClientMockResponse,
+)
 
 from custom_components.tibber_vehicle.api import (
     MAX_RETRIES,
     TibberVehicleApiClient,
     TibberVehicleApiError,
-)
-from pytest_homeassistant_custom_component.common import load_fixture
-from pytest_homeassistant_custom_component.test_util.aiohttp import (
-    AiohttpClientMocker,
-    AiohttpClientMockResponse,
 )
 
 HOMES_URL = "https://data-api.tibber.com/v1/homes"

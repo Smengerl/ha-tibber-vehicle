@@ -10,7 +10,6 @@ decisions behind this.
 from __future__ import annotations
 
 import aiohttp
-
 from homeassistant.const import CONF_ACCESS_TOKEN, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady

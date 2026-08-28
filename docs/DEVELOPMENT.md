@@ -34,7 +34,26 @@ See [`docs/TESTING.md`](TESTING.md) for the actual test concept — which
 files to add, what each should cover, and in what order — rather than
 figuring that out from scratch each time.
 
-## 3. Releasing a change to the real Home Assistant instance
+Run with coverage the same way CI does (95% gate, matching the Silver
+`test-coverage` target in `CLAUDE.md`):
+
+```bash
+pytest tests/ --cov=custom_components/tibber_vehicle --cov-report=term-missing --cov-fail-under=95
+```
+
+## 3. Lint
+
+```bash
+ruff check custom_components/ tests/
+```
+
+`ruff` is installed via `requirements_test.txt`. Config lives in
+`pyproject.toml` (`[tool.ruff]`/`[tool.ruff.lint]`) — `target-version` is
+pinned to the same Python floor as HA's declared minimum (see CLAUDE.md's
+"Known pitfalls" table), so a lint pass also catches syntax the declared
+`hacs.json` minimum can't actually run.
+
+## 4. Releasing a change to the real Home Assistant instance
 
 The real instance is a HAOS appliance — no direct root filesystem access.
 Never edit its `custom_components/` over a network file share as the
@@ -59,7 +78,7 @@ already has the integration installed:
    Credentials/OAuth2 steps — those are tied to the config entry, not the
    installed code version.
 
-## 4. Versioning
+## 5. Versioning
 
 Mechanics only — for the policy on *which* number to bump, whether a
 `CHANGELOG.md` entry is needed, and when to ask the user first, see
@@ -69,9 +88,26 @@ Standard `major.minor.bugfix` git tags (`v0.1.0`, `v0.1.1`, …). Keep
 `custom_components/tibber_vehicle/manifest.json`'s `"version"` field in sync
 with the tag being released.
 
-## 5. CI
+## 6. CI
 
-`.github/workflows/validate.yml` runs `hassfest` (HA's own manifest/schema
-validator) and the HACS repository validator on every push — both are
-boilerplate checks any HACS-listed integration is expected to pass, not
-project-specific logic.
+`.github/workflows/validate.yml` runs on every push/PR (plus a weekly
+Sunday-midnight cron, to catch breakage from upstream HA/HACS changes even
+without a push):
+
+- `hassfest` — HA's own manifest/schema validator.
+- `hacs` — the HACS repository validator (`hacs/action`).
+- `lint` — `ruff check custom_components/ tests/` (config in
+  `pyproject.toml`).
+- `pytest` — the test suite with coverage, gated at `--cov-fail-under=95`
+  (matching the Silver `test-coverage` target in `CLAUDE.md`); the
+  `coverage.xml` is uploaded as a build artifact for inspection, there is
+  no external coverage service (Codecov etc.) wired up.
+
+`.github/workflows/release.yml` runs separately, triggered by
+`release: published` (i.e. when step 3 below — creating the GitHub Release
+— actually happens, not on the tag push itself). It re-checks that
+`manifest.json`'s version matches the release tag, zips
+`custom_components/tibber_vehicle/`, and attaches that zip to the Release
+as a downloadable asset (`tibber_vehicle.zip`) — a convenience for anyone
+installing manually instead of through HACS. See `CLAUDE.md`'s "Release &
+versioning policy" for how this fits into the release steps.

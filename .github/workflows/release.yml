@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  attach-zip:
+    name: Attach integration zip to the release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Verify manifest.json version matches the release tag
+        run: |
+          tag="${{ github.event.release.tag_name }}"
+          tag_version="${tag#v}"
+          manifest_version=$(jq -r '.version' custom_components/tibber_vehicle/manifest.json)
+          if [ "$tag_version" != "$manifest_version" ]; then
+            echo "::error::manifest.json version ($manifest_version) does not match release tag $tag (expected $tag_version)"
+            exit 1
+          fi
+
+      - name: Zip the integration
+        run: |
+          cd custom_components/tibber_vehicle
+          zip -r "${{ github.workspace }}/tibber_vehicle.zip" .
+
+      - name: Attach zip to the release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ github.event.release.tag_name }}" tibber_vehicle.zip --clobber

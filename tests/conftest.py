@@ -9,9 +9,10 @@ and how to run them.
 from __future__ import annotations
 
 import pytest
-
 from homeassistant.components.application_credentials import (
     DOMAIN as APPLICATION_CREDENTIALS_DOMAIN,
+)
+from homeassistant.components.application_credentials import (
     ClientCredential,
     async_import_client_credential,
 )
