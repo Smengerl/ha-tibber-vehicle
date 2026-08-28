@@ -6,6 +6,20 @@ describe what changed for someone installing/using this integration, not a
 full technical walkthrough of every commit — link the actual commit/PR for
 that level of detail instead of writing it out here.
 
+## [Unreleased]
+
+### Changed
+- README: added a "Should you use this, or the official Tibber
+  integration?" section, since Home Assistant's core `tibber` integration
+  now also exposes the same vehicle data (confirmed 2026-08-28 — same
+  underlying Tibber/Enode-backed link). Documents that the official
+  integration is the better default for most users, and that this project
+  continues to exist as (a) an experiment/reference implementation and
+  (b) an intentionally simple base for people who want to modify the code
+  themselves — plus that its entity naming/data formats are deliberately
+  matched to `homeassistant-volkswagencarnet`, unlike the official
+  integration's own conventions.
+
 ## [1.0.1] - 2026-08-24
 
 ### Changed

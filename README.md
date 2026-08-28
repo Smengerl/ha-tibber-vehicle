@@ -25,6 +25,42 @@ vehicles — nothing more (no doors, climate, position, or lock data; see
 
 _A vehicle's device page in Home Assistant, right after setup._
 
+## Should you use this, or the official Tibber integration?
+
+Home Assistant's **official core `tibber` integration** (Settings → Devices
+& Services → Add Integration → "Tibber", no HACS needed) has, as of
+2026-08-28, folded in the same vehicle data this project reads — same
+underlying Tibber/Enode-backed link, functionally identical: state of
+charge, target state of charge, remaining range, plug status, and charging
+state, each as its own entity per vehicle. If you just want the data in
+Home Assistant with the least setup, **the official integration is the
+better default choice** — no OAuth2 client registration step, maintained
+by Tibber itself.
+
+This project (`tibber_vehicle`) still exists deliberately, for two other
+reasons:
+
+- **It's an experiment/reference implementation.** It was built to explore
+  the Tibber Data API directly (see [`docs/CONTEXT.md`](docs/CONTEXT.md))
+  and remains useful as a from-scratch example of a Bronze/Silver-tier HA
+  integration built on that API, independent of whatever the official
+  integration does internally.
+- **It's intentionally simple, for anyone who wants to modify the code
+  themselves.** A single, small custom component (no dependency on
+  `carconnectivity` or any other larger library) is easier to fork and
+  adapt than patching behavior into core Home Assistant's `tibber`
+  integration.
+
+One more difference worth knowing about, covered in more detail in
+[Entities](#entities) below: this project's entity naming, data types, and
+units were deliberately matched to
+[`robinostlund/homeassistant-volkswagencarnet`][volkswagencarnet] — the
+integration this project was originally built to replace once VW blocked
+its backend access (see [`docs/CONTEXT.md`](docs/CONTEXT.md)) — so
+switching from that integration keeps the same entity identity. The
+official `tibber` integration uses its own, different naming/format
+conventions instead.
+
 ## Prerequisites
 
 1. **A Tibber account.** The free tier is sufficient — no energy contract
